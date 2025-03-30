@@ -16,9 +16,10 @@ interface RecipeCardProps {
   rating: number;
   totalRatings: number;
   totalTime: string;
-  prepTime: string;
-  cookTime: string;
-  description: string;
+  prepTime?: string;
+  cookTime?: string;
+  description?: string;
+  isSmallCard?: boolean;
   onPress?: () => void;
   onShare?: () => void;
 }
@@ -32,6 +33,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   prepTime,
   cookTime,
   description,
+  isSmallCard = false,
   onPress,
   onShare,
 }) => {
@@ -43,7 +45,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         <Ionicons
           key={i}
           name="star"
-          size={14}
+          size={isSmallCard ? 9 : 14}
           color={i <= rating ? "#D98324" : "#D9D9D9"}
         />
       );
@@ -52,55 +54,105 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <View style={styles.imageContainer}>
-        <Image source={image} style={styles.image} resizeMode="cover" />
-      </View>
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>{title}</Text>
-
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingText}>{rating} {" "}</Text>
-          <View style={styles.starsContainer}>{renderStars()}</View>
-          <Text style={styles.ratingText}>({totalRatings})</Text>
+    <View style={styles.cardContainer}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.9}
+      >
+        <View
+          style={[styles.imageContainer, { height: isSmallCard ? 110 : 200 }]}
+        >
+          <Image source={image} style={styles.image} resizeMode="cover" />
         </View>
+        <View
+          style={[styles.contentContainer, { padding: isSmallCard ? 5 : 16 }]}
+        >
+          <Text
+            style={[
+              styles.title,
+              {
+                fontSize: isSmallCard ? 11 : 32,
+                marginBottom: isSmallCard ? 2 : 8,
+              },
+            ]}
+          >
+            {title}
+          </Text>
 
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>Total time: {totalTime}</Text>
-          <Text style={styles.detailtimeText}>Prep time: {prepTime}</Text>
-          <Text style={styles.detailtimeText}>Cook time: {cookTime}</Text>
+          <View
+            style={[
+              styles.ratingContainer,
+              { marginBottom: isSmallCard ? 2 : 8 },
+            ]}
+          >
+            {!isSmallCard && <Text style={styles.ratingText}>{rating} </Text>}
+
+            <View style={styles.starsContainer}>{renderStars()}</View>
+            <Text
+              style={[styles.ratingText, { fontSize: isSmallCard ? 9 : 16 }]}
+            >
+              ({totalRatings})
+            </Text>
+          </View>
+
+          {isSmallCard ? (
+            <View style={[styles.timeContainer, { marginBottom: 2 }]}>
+              <Text style={[styles.timeText, { fontSize: 9 }]}>
+                Total time: {totalTime}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.timeContainer}>
+                <Text style={styles.timeText}>Total time: {totalTime}</Text>
+                <Text style={styles.detailtimeText}>Prep time: {prepTime}</Text>
+                <Text style={styles.detailtimeText}>Cook time: {cookTime}</Text>
+              </View>
+
+              <Text numberOfLines={6} style={styles.description}>
+                {description}
+              </Text>
+
+              <TouchableOpacity style={styles.shareButton} onPress={onShare}>
+                <Ionicons name="share-outline" size={24} color="#333" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-
-        <Text numberOfLines={6} style={styles.description}>
-          {description}
-        </Text>
-
-        <TouchableOpacity style={styles.shareButton} onPress={onShare}>
-          <Ionicons name="share-outline" size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+    // outside, we set the border radius and shadow so that the shadow can work with overflow = "hidden"
+  cardContainer: {
+    width: "100%",
+    height: "100%",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+    marginVertical: 8,
+  },
+  // inside, we set the overflow to "hidden".
   card: {
-    width: "90%",
-    height: "75%",
+    width: "100%",
+    height: "100%",
     borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#EFDCAB",
-    marginVertical: 8,
-    marginHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     position: "relative",
   },
   imageContainer: {
-    height: 200,
     backgroundColor: "#f0f0f0", // Placeholder color
   },
   image: {
@@ -108,12 +160,10 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   contentContainer: {
-    padding: 16,
     flex: 1,
   },
   title: {
     fontFamily: "Lora-Regular",
-    fontSize: 32,
     fontWeight: "600",
     marginBottom: 8,
   },
@@ -128,7 +178,6 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontFamily: "Lora-Regular",
-    fontSize: 16,
     color: "#666",
   },
   timeContainer: {

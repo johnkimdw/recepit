@@ -41,7 +41,7 @@ export default function IndexScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Social Cooking</Text>
-      <View style={{ height: "100%" }}>
+      <View style={{ height: "75%", width: "90%", marginVertical: 10 }}>
         <RecipeCard
           image={spicyTomatoImage}
           title="Coconut Fish and Tomato Bake"
@@ -54,14 +54,14 @@ export default function IndexScreen() {
           onPress={handlePress}
           onShare={handleShare}
         />
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.ignoreButton} onPress={handleIgnore}>
-            <Text style={styles.ignoreButtonText}>Ignore</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
-            <Text style={styles.likeButtonText}>Like</Text>
-          </TouchableOpacity>
-        </View>
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.ignoreButton} onPress={handleIgnore}>
+          <Text style={styles.ignoreButtonText}>Ignore</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
+          <Text style={styles.likeButtonText}>Like</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#D98324",
-    marginTop: 10,
+    marginTop: 20,
     alignSelf: "flex-start",
     marginLeft: 25,
   },
@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "90%",
-    marginHorizontal: 16,
     marginTop: 10,
   },
   ignoreButton: {
