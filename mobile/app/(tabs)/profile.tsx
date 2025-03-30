@@ -1,12 +1,12 @@
 import { StyleSheet, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ExploreScreen() {
+export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Explore</Text>
+      <Text style={styles.title}>Profile</Text>
       <Text style={styles.description}>
-        Discover new recipes and cooking ideas
+        Your profile information will be displayed here
       </Text>
     </SafeAreaView>
   );

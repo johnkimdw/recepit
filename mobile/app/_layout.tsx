@@ -4,7 +4,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -29,6 +29,9 @@ export default function RootLayout() {
     if (loaded) {
       // Only hide the splash screen when fonts are loaded
       SplashScreen.hideAsync();
+
+      // TODO: test our 
+      router.replace('/(tabs)');
     }
   }, [loaded]);
 

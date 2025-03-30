@@ -1,13 +1,11 @@
 import { StyleSheet, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ExploreScreen() {
+export default function CollectionsScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Explore</Text>
-      <Text style={styles.description}>
-        Discover new recipes and cooking ideas
-      </Text>
+      <Text style={styles.title}>Collections</Text>
+      <Text style={styles.description}>View your saved collections here</Text>
     </SafeAreaView>
   );
 }
