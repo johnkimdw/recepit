@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
+import Entypo from "@expo/vector-icons/Entypo";
 
 interface SignupSheetProps {
   onLoginPress: () => void;
@@ -90,7 +91,13 @@ const SignupSheet: React.FC<SignupSheetProps> = ({
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeIcon}
           >
-            <Text>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
+            <Text>
+              {showPassword ? (
+                <Entypo name="eye" size={24} color="grey" />
+              ) : (
+                <Entypo name="eye-with-line" size={24} color="grey" />
+              )}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -111,7 +118,13 @@ const SignupSheet: React.FC<SignupSheetProps> = ({
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             style={styles.eyeIcon}
           >
-            <Text>{showConfirmPassword ? "👁️" : "👁️‍🗨️"}</Text>
+            <Text>
+              {showConfirmPassword ? (
+                <Entypo name="eye" size={24} color="grey" />
+              ) : (
+                <Entypo name="eye-with-line" size={24} color="grey" />
+              )}
+            </Text>
           </Pressable>
         </View>
       </View>
