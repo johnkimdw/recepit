@@ -11,6 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import RecipeCard from "@/components/RecipeCard";
+import { LinearGradient } from "expo-linear-gradient";
+
 export default function BrowseScreen() {
   const [activeCategory, setActiveCategory] = useState("New & For you");
 
@@ -51,79 +53,131 @@ export default function BrowseScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with greeting and search */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Good Morning,</Text>
-          <Text style={styles.username}>Luke Cao</Text>
-        </View>
-        <TouchableOpacity style={styles.searchButton}>
-          <Ionicons name="search-outline" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Featured Recipe */}
-      <View style={styles.featuredContainer}>
-        <Image
-          source={require("@/assets/images/pasta.png")}
-          style={styles.featuredImage}
-        />
-        <View style={styles.featuredTextOverlay}>
-          <Text style={styles.featuredText}>
-            Creamy tomato pasta with a rich, spiced sauce
-          </Text>
-        </View>
-      </View>
-
-      {/* Categories */}
-      <View style={styles.HorizontalScrollViewWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContainer}
-        >
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                activeCategory === category && styles.activeCategoryButton,
-              ]}
-              onPress={() => setActiveCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  activeCategory === category && styles.activeCategoryText,
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Recipe Grid */}
       <ScrollView
-        horizontal
         showsVerticalScrollIndicator={false}
-        style={styles.recipeGrid}
+        contentContainerStyle={styles.scrollViewContent}
       >
-        <View style={styles.recipesRow}>
-          {recipeData.map((recipe) => (
-            <View style={{ width: 170, height: 170 }}>
-              <RecipeCard
-                key={recipe.id}
-                title={recipe.title}
-                image={recipe.image}
-                rating={recipe.rating}
-                totalTime={recipe.totalTime}
-                totalRatings={recipe.totalRatings}
-                isSmallCard={true}
-              />
+        {/* Header with greeting and search */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>{`Good Morning,\nLuke Cao`}</Text>
+          </View>
+          <TouchableOpacity style={styles.searchButton}>
+            <Ionicons name="search-outline" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Featured Recipe */}
+        <View style={styles.featuredContainer}>
+          <Image
+            source={require("@/assets/images/pasta.png")}
+            style={styles.featuredImage}
+          />
+
+          {/* Inner shadow using gradient overlays */}
+          <LinearGradient
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.3)"]}
+            style={styles.innerShadowBottom}
+          />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.5)", "rgba(0,0,0,0)"]}
+            style={styles.innerShadowTop}
+          />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0)"]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.innerShadowLeft}
+          />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0)"]}
+            start={{ x: 1, y: 0.5 }}
+            end={{ x: 0.8, y: 0.5 }}
+            style={styles.innerShadowRight}
+          />
+
+          <View style={styles.featuredTextOverlay}>
+            <Text style={styles.featuredText}>
+              Creamy tomato pasta with a rich, spiced sauce
+            </Text>
+          </View>
+        </View>
+
+        {/* Categories */}
+        <View style={styles.HorizontalScrollViewWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  activeCategory === category && styles.activeCategoryButton,
+                ]}
+                onPress={() => setActiveCategory(category)}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    activeCategory === category && styles.activeCategoryText,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Recipe Grid */}
+        <View style={styles.recipeSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            <View style={styles.recipesRow}>
+              {recipeData.map((recipe) => (
+                <View
+                  key={recipe.id}
+                  style={{ width: 170, height: 170, marginRight: 10 }}
+                >
+                  <RecipeCard
+                    title={recipe.title}
+                    image={recipe.image}
+                    rating={recipe.rating}
+                    totalTime={recipe.totalTime}
+                    totalRatings={recipe.totalRatings}
+                    isSmallCard={true}
+                  />
+                </View>
+              ))}
             </View>
-          ))}
+          </ScrollView>
+        </View>
+
+        {/* Additional Content for Testing Vertical Scroll */}
+        <View style={styles.additionalContent}>
+          <Text style={styles.sectionTitle}>Extra Things TODO</Text>
+          <View style={styles.popularRecipesContainer}>
+            {recipeData.map((recipe) => (
+              <View
+                key={`popular-${recipe.id}`}
+                style={{ width: "100%", height: 200, marginBottom: 20 }}
+              >
+                <RecipeCard
+                  title={recipe.title}
+                  image={recipe.image}
+                  rating={recipe.rating}
+                  totalTime={recipe.totalTime}
+                  totalRatings={recipe.totalRatings}
+                  isSmallCard={false}
+                />
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -135,30 +189,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FAF7F0",
   },
+  scrollViewContent: {
+    alignItems: "center",
+    paddingBottom: 30,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginTop: 10,
+    marginTop: 20,
+    alignSelf: "stretch",
   },
   greeting: {
-    fontSize: 20,
+    fontSize: 32,
     color: "#D98324",
-  },
-  username: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#D98324",
+    fontFamily: "Lora-Bold",
   },
   searchButton: {
     padding: 10,
   },
   featuredContainer: {
     marginTop: 20,
-    marginHorizontal: 20,
-    height: 200,
-    borderRadius: 15,
+    width: 350,
+    height: 350,
+    position: "relative",
     overflow: "hidden",
   },
   featuredImage: {
@@ -166,18 +221,45 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  featuredTextOverlay: {
+  innerShadowTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+  },
+  innerShadowBottom: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    height: 20,
+  },
+  innerShadowLeft: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 80,
+  },
+  innerShadowRight: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 40,
+  },
+  featuredTextOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
     padding: 15,
   },
   featuredText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: "#F8F5E9",
+    fontSize: 32,
+    fontFamily: "Lora-Bold",
   },
   HorizontalScrollViewWrapper: {
     height: 70,
@@ -185,6 +267,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    alignSelf: "stretch",
   },
   categoriesContainer: {
     flexDirection: "row",
@@ -195,7 +278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginHorizontal: 5,
     borderRadius: 15,
-    backgroundColor: "#F2F2F2",
+    backgroundColor: "transparent",
     height: 40,
     justifyContent: "center",
     alignItems: "center",
@@ -204,59 +287,36 @@ const styles = StyleSheet.create({
     backgroundColor: "#D98324",
   },
   categoryText: {
-    fontSize: 14,
-    color: "#888",
+    fontSize: 16,
+    color: "#D98324",
+    fontFamily: "Lora-Bold",
   },
   activeCategoryText: {
-    color: "white",
+    fontSize: 16,
+    color: "#F8F5E9",
     fontWeight: "500",
+    fontFamily: "Lora-Bold",
   },
-  recipeGrid: {
-    marginTop: 5,
+  recipeSection: {
+    alignSelf: "stretch",
   },
   recipesRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
     paddingHorizontal: 15,
-    gap: 10,
-  },
-  recipeCard: {
-    width: "31%",
-    backgroundColor: "#FCF6E6",
-    borderRadius: 15,
     marginBottom: 15,
-    overflow: "hidden",
   },
-  recipeImage: {
+  additionalContent: {
+    marginTop: 30,
     width: "100%",
-    height: 100,
-    resizeMode: "cover",
+    paddingHorizontal: 15,
   },
-  recipeInfo: {
-    padding: 10,
-  },
-  recipeTitle: {
-    fontSize: 12,
+  sectionTitle: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 5,
-    height: 32,
+    marginBottom: 15,
+    color: "#333",
   },
-  recipeDetails: {
-    marginTop: 5,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  recipeRating: {
-    fontSize: 10,
-    color: "#888",
-    marginLeft: 5,
-  },
-  recipeDuration: {
-    fontSize: 10,
-    color: "#888",
-    marginTop: 2,
+  popularRecipesContainer: {
+    width: "100%",
   },
 });

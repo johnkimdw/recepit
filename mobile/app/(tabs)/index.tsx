@@ -40,8 +40,25 @@ export default function IndexScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Social Cooking</Text>
-      <View style={{ height: "75%", width: "90%", marginVertical: 10 }}>
+      <View
+        style={{
+          flex: 0.4,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 20,
+          alignSelf: "flex-start",
+          marginLeft: 25,
+          gap: 10,
+        }}
+      >
+        <Image
+          source={require("@/assets/images/logo.png")}
+          style={{ width: 40, height: 40 }}
+        />
+        <Text style={styles.title}>Social Cooking</Text>
+      </View>
+      <View style={{ height: "70%", width: "90%", marginVertical: 10 }}>
         <RecipeCard
           image={spicyTomatoImage}
           title="Coconut Fish and Tomato Bake"
@@ -78,9 +95,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#D98324",
-    marginTop: 20,
-    alignSelf: "flex-start",
-    marginLeft: 25,
   },
   description: {
     fontSize: 16,
