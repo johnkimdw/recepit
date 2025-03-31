@@ -58,7 +58,7 @@ export default function IndexScreen() {
         />
         <Text style={styles.title}>Social Cooking</Text>
       </View>
-      <View style={{ height: "75%", width: "90%", marginVertical: 10 }}>
+      <View style={{ height: "70%", width: "90%", marginVertical: 10 }}>
         <RecipeCard
           image={spicyTomatoImage}
           title="Coconut Fish and Tomato Bake"
