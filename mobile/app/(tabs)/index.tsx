@@ -10,6 +10,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState, useRef } from "react";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withDelay,
+  Easing,
+} from "react-native-reanimated";
 
 // Define Recipe type
 interface Recipe {
@@ -67,6 +75,38 @@ export default function IndexScreen() {
 
   // State to track current recipes
   const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
+
+  // Animation values for the empty state
+  const emptyStateOpacity = useSharedValue(0);
+  const emptyStateScale = useSharedValue(0.8);
+
+  // Update animation values when recipes change
+  useEffect(() => {
+    if (recipes.length === 0) {
+      // Animate in when no recipes
+      emptyStateOpacity.value = withTiming(1, {
+        duration: 500,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+      emptyStateScale.value = withSpring(1, {
+        mass: 0.5,
+        stiffness: 150,
+        damping: 15,
+      });
+    } else {
+      // Reset when recipes are available
+      emptyStateOpacity.value = 0;
+      emptyStateScale.value = 0.8;
+    }
+  }, [recipes.length]);
+
+  // Animated styles for the empty state
+  const emptyStateAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: emptyStateOpacity.value,
+      transform: [{ scale: emptyStateScale.value }],
+    };
+  });
 
   useEffect(() => {
     console.log("Platform:", Platform.OS);
@@ -149,7 +189,7 @@ export default function IndexScreen() {
             ))}
           </View>
         ) : (
-          <View style={styles.noRecipes}>
+          <Animated.View style={[styles.noRecipes, emptyStateAnimatedStyle]}>
             <Text style={styles.noRecipesText}>No more recipes to show!</Text>
             <TouchableOpacity
               style={styles.refreshButton}
@@ -157,7 +197,7 @@ export default function IndexScreen() {
             >
               <Text style={styles.refreshButtonText}>Refresh</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         )}
       </View>
 
