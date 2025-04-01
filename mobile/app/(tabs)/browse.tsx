@@ -151,6 +151,7 @@ export default function BrowseScreen() {
                     totalTime={recipe.totalTime}
                     totalRatings={recipe.totalRatings}
                     isSmallCard={true}
+                    isActiveCard={false}
                   />
                 </View>
               ))}
@@ -174,6 +175,7 @@ export default function BrowseScreen() {
                   totalTime={recipe.totalTime}
                   totalRatings={recipe.totalRatings}
                   isSmallCard={false}
+                  isActiveCard={false}
                 />
               </View>
             ))}

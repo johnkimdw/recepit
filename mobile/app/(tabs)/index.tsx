@@ -9,33 +9,91 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
+
+// Define Recipe type
+interface Recipe {
+  id: number;
+  image: any;
+  title: string;
+  rating: number;
+  totalRatings: number;
+  totalTime: string;
+  prepTime: string;
+  cookTime: string;
+  description: string;
+}
 
 export default function IndexScreen() {
-  const spicyTomatoImage = require("@/assets/images/spicy-tomato.jpg");
+  // Sample recipe data
+  const recipesData: Recipe[] = [
+    {
+      id: 1,
+      image: require("@/assets/images/spicy-tomato.jpg"),
+      title: "Coconut Fish and Tomato Bake",
+      rating: 4,
+      totalRatings: 10184,
+      totalTime: "30 minutes",
+      prepTime: "10 minutes",
+      cookTime: "20 minutes",
+      description:
+        "A coconut-milk dressing infused with garlic, ginger, turmeric and lime coats fish fillets in this sheet-pan dinner. Accompanying the fish are bright bursts of tomatoes which turn jammy",
+    },
+    {
+      id: 2,
+      image: require("@/assets/images/spicy-tomato.jpg"),
+      title: "Spicy Vegetable Curry",
+      rating: 5,
+      totalRatings: 8742,
+      totalTime: "45 minutes",
+      prepTime: "15 minutes",
+      cookTime: "30 minutes",
+      description:
+        "This vibrant vegetable curry brings together a colorful blend of seasonal vegetables in a rich, aromatic sauce that's perfectly balanced with warm spices.",
+    },
+    {
+      id: 3,
+      image: require("@/assets/images/spicy-tomato.jpg"),
+      title: "Classic Beef Stew",
+      rating: 4.5,
+      totalRatings: 6531,
+      totalTime: "2 hours",
+      prepTime: "20 minutes",
+      cookTime: "1 hour 40 minutes",
+      description:
+        "A hearty beef stew made with tender chunks of beef, carrots, potatoes, and a rich savory broth. Perfect comfort food for chilly evenings.",
+    },
+  ];
+
+  // State to track current recipes
+  const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
 
   useEffect(() => {
-    console.log("Image source:", spicyTomatoImage);
     console.log("Platform:", Platform.OS);
   }, []);
 
-  const handlePress = () => {
-    Alert.alert(
-      "Recipe Selected",
-      "You selected the Coconut Fish and Tomato Bake recipe"
+  const handlePress = (recipe: Recipe) => {
+    //Alert.alert("Recipe Selected", `You selected the ${recipe.title} recipe`);
+  };
+
+  const handleShare = (recipe: Recipe) => {
+    Alert.alert("Share", `Sharing ${recipe.title} recipe!`);
+  };
+
+  const handleIgnore = (recipe: Recipe) => {
+    //Alert.alert("Ignored", `${recipe.title} has been ignored`);
+    // Remove the swiped recipe
+    setRecipes((currentRecipes) =>
+      currentRecipes.filter((item) => item.id !== recipe.id)
     );
   };
 
-  const handleShare = () => {
-    Alert.alert("Share", "Sharing this delicious recipe!");
-  };
-
-  const handleIgnore = () => {
-    Alert.alert("Ignored", "Recipe has been ignored");
-  };
-
-  const handleLike = () => {
-    Alert.alert("Liked", "Recipe has been added to your favorites");
+  const handleLike = (recipe: Recipe) => {
+    //Alert.alert("Liked", `${recipe.title} has been added to your favorites`);
+    // Remove the swiped recipe
+    setRecipes((currentRecipes) =>
+      currentRecipes.filter((item) => item.id !== recipe.id)
+    );
   };
 
   return (
@@ -58,27 +116,55 @@ export default function IndexScreen() {
         />
         <Text style={styles.title}>Social Cooking</Text>
       </View>
+
       <View style={{ height: "70%", width: "90%", marginVertical: 10 }}>
-        <RecipeCard
-          image={spicyTomatoImage}
-          title="Coconut Fish and Tomato Bake"
-          rating={4}
-          totalRatings={10184}
-          totalTime="30 minutes"
-          prepTime="10 minutes"
-          cookTime="20 minutes"
-          description="A coconut-milk dressing infused with garlic, ginger, turmeric and lime coats fish fillets in this sheet-pan dinner. Accompanying the fish are bright bursts of tomatoes which turn jammy"
-          onPress={handlePress}
-          onShare={handleShare}
-        />
+        {recipes.length > 0 ? (
+          <View style={styles.cardStack}>
+            {recipes.map((recipe, index) => (
+              <View
+                key={recipe.id}
+                style={[
+                  styles.cardWrapper,
+                  {
+                    zIndex: recipes.length - index, // Stack order
+                  },
+                ]}
+              >
+                <RecipeCard
+                  image={recipe.image}
+                  title={recipe.title}
+                  rating={recipe.rating}
+                  totalRatings={recipe.totalRatings}
+                  totalTime={recipe.totalTime}
+                  prepTime={recipe.prepTime}
+                  cookTime={recipe.cookTime}
+                  description={recipe.description}
+                  onPress={() => handlePress(recipe)}
+                  onShare={() => handleShare(recipe)}
+                  onLike={() => handleLike(recipe)}
+                  onIgnore={() => handleIgnore(recipe)}
+                  isActiveCard={index === 0} // Only the top card is interactive
+                />
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.noRecipes}>
+            <Text style={styles.noRecipesText}>No more recipes to show!</Text>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={() => setRecipes(recipesData)}
+            >
+              <Text style={styles.refreshButtonText}>Refresh</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.ignoreButton} onPress={handleIgnore}>
-          <Text style={styles.ignoreButtonText}>Ignore</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
-          <Text style={styles.likeButtonText}>Like</Text>
-        </TouchableOpacity>
+
+      <View style={styles.instructionText}>
+        <Text style={styles.instruction}>
+          Swipe right to like, left to ignore
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -96,42 +182,53 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#D98324",
   },
+  cardStack: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+  },
+  cardWrapper: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
   description: {
     fontSize: 16,
     color: "gray",
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "90%",
+  instructionText: {
     marginTop: 10,
-  },
-  ignoreButton: {
-    backgroundColor: "transparent",
-    borderRadius: 8,
-    padding: 12,
-    alignItems: "center",
-    flex: 1,
-    marginRight: 8,
-    borderWidth: 2,
-    borderColor: "#EFDCAB",
-  },
-  likeButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 15,
     backgroundColor: "#EFDCAB",
-    borderRadius: 8,
-    padding: 12,
-    alignItems: "center",
+    borderRadius: 20,
+  },
+  instruction: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
+  noRecipes: {
     flex: 1,
-    marginLeft: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#EFDCAB",
+    borderRadius: 12,
   },
-  ignoreButtonText: {
-    fontSize: 20,
-    color: "#000000",
-    fontWeight: "500",
+  noRecipesText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
-  likeButtonText: {
-    fontSize: 20,
-    color: "#000000",
-    fontWeight: "500",
+  refreshButton: {
+    backgroundColor: "#D98324",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
