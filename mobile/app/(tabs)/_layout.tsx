@@ -137,7 +137,19 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="grocery-list" 
+        options={{
+          title: "Grocery List",
+          href: null,
+          headerShown: false,
+        }}
+      />
+
+
     </Tabs>
+
+    
   );
 }
 

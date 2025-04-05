@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-// import RecipeCard from "@/components/RecipeCard";
 import { useState } from "react";
+import { useRouter } from "expo-router"; // Add this import
 
 // Format 1000 numbers to K
 function formatNumber(num: number) {
@@ -21,6 +21,8 @@ function formatNumber(num: number) {
 }
 
 export default function ProfileScreen() {
+  const router = useRouter(); // Add this line to get the router
+
   // Profile data (placeholder)
   const profileData = {
     username: "lukewarm3",
@@ -110,7 +112,11 @@ export default function ProfileScreen() {
 
         {/* Grocery List  */}
         <View style={styles.sectionContainer}>
-          <View style={styles.sectionTitleContainer}>
+          {/* Wrap this in TouchableOpacity */}
+          <TouchableOpacity 
+            style={styles.sectionTitleContainer}
+            onPress={() => router.push('/(tabs)/grocery-list')}
+          >
             <Text style={styles.sectionTitle}>Grocery List</Text>
             <Ionicons
               name="chevron-forward-outline"
@@ -118,7 +124,7 @@ export default function ProfileScreen() {
               color="#D98324"
               style={styles.icon}
             />
-          </View>
+          </TouchableOpacity>
           <ScrollView
             style={[
               styles.groceryListContainer,
