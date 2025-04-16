@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # Oracle Database settings for your EC2 instance
-    DB_USER: str = "oralce"  # Default admin user, you might create a specific user for your app
+    DB_USER: str = "oracle"  # Default admin user, you might create a specific user for your app
     DB_PASSWORD: str = "1234"  # Set this in .env file
-    DB_HOST: str = "172.22.135.245"  # If FastAPI runs on the same EC2 instance
+    DB_HOST: str = "44.204.33.204"  # If FastAPI runs on the same EC2 instance
     DB_PORT: str = "1521"       # Default Oracle port
     DB_SERVICE: str = "XE"      # XE is the service name for Oracle Express Edition
     
