@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings  # Changed from pydantic import BaseSettings
+from pydantic_settings import BaseSettings  
 from typing import Optional, List
 
 class Settings(BaseSettings):
@@ -8,11 +8,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # Oracle Database settings for your EC2 instance
-    DB_USER: str = "test_user1"  # Default admin user, you might create a specific user for your app
-    DB_PASSWORD: str = "1234"  # Set this in .env file
-    DB_HOST: str = "44.204.33.204"  # If FastAPI runs on the same EC2 instance "44.204.33.204" "172.22.135.245"
-    DB_PORT: str = "1521"       # Default Oracle port
-    DB_SERVICE: str = "XE"      # XE is the service name for Oracle Express Edition
+    DB_USER: str = "test_user1"         # oracle db user
+    DB_PASSWORD: str = "1234"           # need to set this in .env file
+    DB_HOST: str = "54.152.153.232"     # vm ip address
+    DB_PORT: str = "1539"               # oracle port
+    DB_SERVICE: str = "XE"      
     
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
