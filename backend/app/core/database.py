@@ -1,10 +1,12 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
+
 from sqlalchemy.orm import sessionmaker
 import cx_Oracle
 
 from app.core.config import settings
 from app.core.setup_oracle import setup_oracle_client
+
 
 # Initialize Oracle client
 try:

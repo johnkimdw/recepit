@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class IngredientBase(BaseModel):
     name: str
@@ -17,8 +17,7 @@ class IngredientUpdate(BaseModel):
 class Ingredient(IngredientBase):
     ingredient_id: int
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RecipeIngredientBase(BaseModel):
     ingredient_id: int
@@ -31,5 +30,4 @@ class IngredientInRecipe(BaseModel):
     quantity: float
     unit: Optional[str] = None
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

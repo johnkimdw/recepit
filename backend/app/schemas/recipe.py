@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 from app.schemas.ingredient import IngredientInRecipe
@@ -34,8 +34,7 @@ class RecipeInDBBase(RecipeBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Recipe(RecipeInDBBase):
     pass

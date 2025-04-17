@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -18,8 +18,7 @@ class UserInDBBase(UserBase):
     user_id: int
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class User(UserInDBBase):
     pass
@@ -27,3 +26,5 @@ class User(UserInDBBase):
 class UserWithFollow(User):
     followers_count: int
     following_count: int
+    
+    # model_config = ConfigDict(from_attributes=True)
