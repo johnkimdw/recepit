@@ -8,6 +8,11 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 
@@ -20,7 +25,7 @@ const LoginSheet: React.FC<LoginSheetProps> = ({
   onSignUpPress,
   onLoginSubmit,
 }) => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -35,74 +40,94 @@ const LoginSheet: React.FC<LoginSheetProps> = ({
   }, []);
 
   const handleLogin = () => {
-    onLoginSubmit(email, password);
+    onLoginSubmit(username, password);
+  };
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
   };
 
   return (
-    <Animated.View style={[styles.loginContainer, { opacity: fadeAnim }]}>
-      <Text style={styles.loginTitle}>Welcome Back!</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      {/* <TouchableWithoutFeedback onPress={dismissKeyboard}> */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.loginContainer, { opacity: fadeAnim }]}>
+          <Text style={styles.loginTitle}>Welcome Back!</Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="example@email.com"
-          placeholderTextColor="rgba(128, 128, 128, 0.5)"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Username</Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Enter your username"
+              placeholderTextColor="rgba(128, 128, 128, 0.5)"
+              autoCapitalize="none"
+            />
+          </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Password</Text>
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            placeholder="Enter your password"
-            placeholderTextColor="rgba(128, 128, 128, 0.5)"
-            autoCapitalize="none"
-          />
-          <Pressable
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeIcon}
-          >
-            <Text>
-              {showPassword ? (
-                <Entypo name="eye" size={24} color="grey" />
-              ) : (
-                <Entypo name="eye-with-line" size={24} color="grey" />
-              )}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholder="Enter your password"
+                placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                autoCapitalize="none"
+              />
+              <Pressable
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+              >
+                <Text>
+                  {showPassword ? (
+                    <Entypo name="eye" size={24} color="grey" />
+                  ) : (
+                    <Entypo name="eye-with-line" size={24} color="grey" />
+                  )}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>LOGIN</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.loginButtonText}>LOGIN</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => console.log("Forgot password")}>
-        <Text style={styles.forgotPassword}>Forgot password?</Text>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={() => console.log("Forgot password")}>
+            <Text style={styles.forgotPassword}>Forgot password?</Text>
+          </TouchableOpacity>
 
-      <View style={styles.signupContainer}>
-        <Text style={styles.signupText}>Don't have an account?</Text>
-        <TouchableOpacity onPress={onSignUpPress}>
-          <Text style={styles.signupLink}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={onSignUpPress}>
+              <Text style={styles.signupLink}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </ScrollView>
+      {/* </TouchableWithoutFeedback> */}
+    </KeyboardAvoidingView>
   );
 };
 
 const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 80,
+  },
   loginContainer: {
     flex: 1,
     paddingTop: 50,
@@ -180,8 +205,7 @@ const styles = StyleSheet.create({
   },
   signupContainer: {
     flexDirection: "row",
-    position: "absolute",
-    bottom: 40,
+    marginTop: 40,
     alignItems: "center",
   },
   signupText: {

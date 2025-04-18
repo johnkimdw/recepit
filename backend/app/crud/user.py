@@ -57,9 +57,11 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     user = get_user_by_username(db, username)
+    print("username, user", username, user)
     if not user:
         return None
     if not verify_password(password, user.password_hash):
+        print("Invalid password")
         return None
     return user
 
