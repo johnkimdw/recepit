@@ -10,11 +10,10 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ColorSchemeName } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
-
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -25,16 +24,6 @@ export default function RootLayout() {
     "Lora-Regular": require("../assets/fonts/Lora-Regular.ttf"),
     "Lora-Bold": require("../assets/fonts/Lora-Bold.ttf"),
   });
-
-  useEffect(() => {
-    if (loaded) {
-      // Only hide the splash screen when fonts are loaded
-      SplashScreen.hideAsync();
-
-      // TODO: test our
-      router.replace("/(tabs)");
-    }
-  }, [loaded]);
 
   if (!loaded) {
     return (
@@ -49,15 +38,34 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
+      <InnerApp colorScheme={colorScheme} />
+    </AuthProvider>
+  );
+}
+
+function InnerApp({ colorScheme }: { colorScheme: ColorSchemeName }) {
+  const { userID } = useAuth();
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+
+    if (userID) {
+      router.replace("/(tabs)");
+    }
+  }, [userID]);
+
+  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
           <Stack
-            initialRouteName="(tabs)"
+            initialRouteName="index"
             screenOptions={{ headerShown: false }}
           >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-for-jwt"  
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days
     
     # Oracle Database settings for your EC2 instance
     DB_USER: str = "test_user1"         # oracle db user
@@ -19,7 +20,14 @@ class Settings(BaseSettings):
         return f"oracle+cx_oracle://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/?service_name={self.DB_SERVICE}"
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        # "http://localhost:8081", 
+        # "http://127.0.0.1:8081",
+        # "exp://10.24.197.61:8081",  # Expo on iPhone
+        # "http://10.24.197.61:8081",  # HTTP on iPhone
+        # "http://10.24.197.61:8000",  # Backend direct access
+        "*"  # Allow all origins temporarily for debugging
+    ]
     
     # media settings
     MEDIA_ROOT: str = "media"
