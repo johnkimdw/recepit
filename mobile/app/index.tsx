@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { router } from "expo-router";
 import LoginSheet from "../components/LoginSheet";
 import SignupSheet from "../components/SignupSheet";
 import WelcomeButtons from "../components/WelcomeButtons";
+import { useAuth } from "@/hooks/useAuth";
+import { UserData } from "@/hooks/useAuth";
 
 export default function WelcomeScreen() {
   // State to track which mode we're in
@@ -20,6 +22,10 @@ export default function WelcomeScreen() {
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [showLoginContent, setShowLoginContent] = useState(false);
   const [showSignupContent, setShowSignupContent] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const { login, register } = useAuth();
 
   // Animation value for sheet height
   const sheetAnimation = useRef(new Animated.Value(0)).current;
@@ -46,20 +52,45 @@ export default function WelcomeScreen() {
     setShowLoginContent(true);
   };
 
-  const handleLogin = (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     // Handle login logic here
     console.log("Logging in with:", email, password);
     // You would typically call your authentication service here
+    const message = await login(email, password);
+    if (message === "success") {
+      router.replace("/(tabs)");
+    } else {
+      setError(message);
+    }
   };
 
-  const handleSignup = (
+  const handleSignup = async (
     username: string,
     email: string,
     password: string,
     confirmPassword: string
   ) => {
     console.log("Signing up with:", username, email, password, confirmPassword);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     // You would typically call your registration service here
+    const userData: UserData = {
+      username,
+      email,
+      password,
+    };
+    const message = await register(userData);
+
+    if (message === "success") {
+      setIsLoginMode(true);
+      setShowLoginContent(true);
+    } else {
+      setError(message);
+    }
   };
 
   const switchToLogin = () => {
@@ -109,6 +140,7 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
+      {error && <Text style={styles.errorText}>{error}</Text>}
       {/* Main background with header content */}
       <View style={styles.mainContent}>
         <Text style={styles.welcomeText}>
@@ -171,6 +203,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F5E9",
+    position: "relative",
   },
   mainContent: {
     flex: 1,
@@ -219,5 +252,20 @@ const styles = StyleSheet.create({
     elevation: 5,
     gap: 30,
     zIndex: 999,
+  },
+  errorText: {
+    width: "50%",
+    color: "red",
+    textAlign: "center",
+    position: "absolute",
+    borderRadius: 10,
+    elevation: 5,
+    top: 30,
+    left: "25%",
+    right: "25%",
+    zIndex: 999,
+    fontSize: 16,
+    backgroundColor: "white",
+    padding: 10,
   },
 });

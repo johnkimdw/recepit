@@ -8,6 +8,11 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 
@@ -46,109 +51,136 @@ const SignupSheet: React.FC<SignupSheetProps> = ({
     onSignupSubmit(username, email, password, confirmPassword);
   };
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   return (
-    <Animated.View style={[styles.signupContainer, { opacity: fadeAnim }]}>
-      <Text style={styles.signupTitle}>Welcome!</Text>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Username</Text>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Enter username"
-          placeholderTextColor="rgba(128, 128, 128, 0.5)"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="example@email.com"
-          placeholderTextColor="rgba(128, 128, 128, 0.5)"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Password</Text>
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            placeholder="Enter your password"
-            placeholderTextColor="rgba(128, 128, 128, 0.5)"
-            autoCapitalize="none"
-          />
-          <Pressable
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeIcon}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      {/* <TouchableWithoutFeedback onPress={dismissKeyboard}> */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View
+            style={[styles.signupContainer, { opacity: fadeAnim }]}
           >
-            <Text>
-              {showPassword ? (
-                <Entypo name="eye" size={24} color="grey" />
-              ) : (
-                <Entypo name="eye-with-line" size={24} color="grey" />
-              )}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+            <Text style={styles.signupTitle}>Welcome!</Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Confirm Password</Text>
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry={!showConfirmPassword}
-            placeholder="Confirm your password"
-            placeholderTextColor="rgba(128, 128, 128, 0.5)"
-            autoCapitalize="none"
-          />
-          <Pressable
-            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            style={styles.eyeIcon}
-          >
-            <Text>
-              {showConfirmPassword ? (
-                <Entypo name="eye" size={24} color="grey" />
-              ) : (
-                <Entypo name="eye-with-line" size={24} color="grey" />
-              )}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Username</Text>
+              <TextInput
+                style={styles.input}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Enter username"
+                placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                autoCapitalize="none"
+              />
+            </View>
 
-      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-        <Text style={styles.signupButtonText}>SIGN UP</Text>
-      </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="example@email.com"
+                placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>Already have an account?</Text>
-        <TouchableOpacity onPress={onLoginPress}>
-          <Text style={styles.loginLink}>Login</Text>
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                  autoCapitalize="none"
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Text>
+                    {showPassword ? (
+                      <Entypo name="eye" size={24} color="grey" />
+                    ) : (
+                      <Entypo name="eye-with-line" size={24} color="grey" />
+                    )}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Confirm Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  placeholder="Confirm your password"
+                  placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                  autoCapitalize="none"
+                />
+                <Pressable
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Text>
+                    {showConfirmPassword ? (
+                      <Entypo name="eye" size={24} color="grey" />
+                    ) : (
+                      <Entypo name="eye-with-line" size={24} color="grey" />
+                    )}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={handleSignup}
+            >
+              <Text style={styles.signupButtonText}>SIGN UP</Text>
+            </TouchableOpacity>
+
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Already have an account?</Text>
+              <TouchableOpacity onPress={onLoginPress}>
+                <Text style={styles.loginLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </ScrollView>
+      {/* </TouchableWithoutFeedback> */}
+    </KeyboardAvoidingView>
   );
 };
 
 const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 80,
+  },
   signupContainer: {
     flex: 1,
     paddingTop: 50,
+    paddingHorizontal: 20,
     alignItems: "center",
   },
   signupTitle: {
@@ -216,8 +248,7 @@ const styles = StyleSheet.create({
   },
   loginContainer: {
     flexDirection: "row",
-    position: "absolute",
-    bottom: 40,
+    marginTop: 20,
     alignItems: "center",
   },
   loginText: {

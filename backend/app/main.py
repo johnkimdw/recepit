@@ -14,6 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.routers import auth, users
+# Import all models to ensure proper initialization
+import app.models
 # , recipes, ingredients, categories, reviews, favorites
 
 # Create media directory if it doesn't exist
@@ -32,8 +34,10 @@ if settings.BACKEND_CORS_ORIGINS:
         CORSMiddleware,
         allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["Content-Type", "Authorization", "Accept"],
+        expose_headers=["Content-Type"],
+        max_age=600,  # Cache preflight requests for 10 minutes
     )
 
 # Mount static files for media
