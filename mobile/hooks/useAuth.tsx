@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const verifyUser = async () => {
       const storedAccessToken = await AsyncStorage.getItem("accessToken");
       const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+
       console.log(
         "storedAccessToken, storedRefreshToken",
         storedAccessToken,

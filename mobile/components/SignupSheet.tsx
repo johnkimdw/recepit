@@ -60,7 +60,7 @@ const SignupSheet: React.FC<SignupSheetProps> = ({
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      {/* I onPress={dismissKeyboard}> */}
+      {/* <TouchableWithoutFeedback onPress={dismissKeyboard}> */}
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
