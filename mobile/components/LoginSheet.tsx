@@ -57,64 +57,64 @@ const LoginSheet: React.FC<LoginSheetProps> = ({
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-      >
-        <Animated.View style={[styles.loginContainer, { opacity: fadeAnim }]}>
-          <Text style={styles.loginTitle}>Welcome Back!</Text>
+        >
+          <Animated.View style={[styles.loginContainer, { opacity: fadeAnim }]}>
+            <Text style={styles.loginTitle}>Welcome Back!</Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Username</Text>
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Enter your username"
-              placeholderTextColor="rgba(128, 128, 128, 0.5)"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Username</Text>
               <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                placeholder="Enter your password"
+                style={styles.input}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Enter your username"
                 placeholderTextColor="rgba(128, 128, 128, 0.5)"
                 autoCapitalize="none"
               />
-              <Pressable
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-              >
-                <Text>
-                  {showPassword ? (
-                    <Entypo name="eye" size={24} color="grey" />
-                  ) : (
-                    <Entypo name="eye-with-line" size={24} color="grey" />
-                  )}
-                </Text>
-              </Pressable>
             </View>
-          </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>LOGIN</Text>
-          </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor="rgba(128, 128, 128, 0.5)"
+                  autoCapitalize="none"
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Text>
+                    {showPassword ? (
+                      <Entypo name="eye" size={24} color="grey" />
+                    ) : (
+                      <Entypo name="eye-with-line" size={24} color="grey" />
+                    )}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
-          <TouchableOpacity onPress={() => console.log("Forgot password")}>
-            <Text style={styles.forgotPassword}>Forgot password?</Text>
-          </TouchableOpacity>
-
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={onSignUpPress}>
-              <Text style={styles.signupLink}>Sign Up</Text>
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>LOGIN</Text>
             </TouchableOpacity>
-          </View>
-        </Animated.View>
+
+            <TouchableOpacity onPress={() => console.log("Forgot password")}>
+              <Text style={styles.forgotPassword}>Forgot password?</Text>
+            </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don't have an account?</Text>
+              <TouchableOpacity onPress={onSignUpPress}>
+                <Text style={styles.signupLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
       </ScrollView>
       {/* </TouchableWithoutFeedback> */}
     </KeyboardAvoidingView>

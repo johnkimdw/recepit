@@ -3,7 +3,7 @@ import { useAuth } from './useAuth';
 
 // custom hook to handle API calls with header access token , and refresh token if access token is expired
 export function useApi() {
-  const { accessToken, refreshToken } = useAuth();
+  const { accessToken, refresh } = useAuth();
   
   const apiCall = async (url: string, options: any = {}) => {
     // Add authorization header with access token
@@ -20,7 +20,7 @@ export function useApi() {
       
       // If unauthorized, try to refresh token
       if (response.status === 401) {
-        const refreshed = await refreshToken();
+        const refreshed = await refresh();
         if (refreshed) {
           // Retry with new token
           return apiCall(url, options);

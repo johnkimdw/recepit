@@ -145,13 +145,14 @@ export default function BrowseScreen() {
                   style={{ width: 170, height: 170, marginRight: 10 }}
                 >
                   <RecipeCard
+                    recipe_id={recipe.id.toString()}
                     title={recipe.title}
                     image={recipe.image}
                     rating={recipe.rating}
                     totalTime={recipe.totalTime}
                     totalRatings={recipe.totalRatings}
                     isSmallCard={true}
-                    isActiveCard={false}
+                    isActiveCard={true}
                   />
                 </View>
               ))}
@@ -169,13 +170,14 @@ export default function BrowseScreen() {
                 style={{ width: "100%", height: 200, marginBottom: 20 }}
               >
                 <RecipeCard
+                  recipe_id={recipe.id.toString()}
                   title={recipe.title}
                   image={recipe.image}
                   rating={recipe.rating}
                   totalTime={recipe.totalTime}
                   totalRatings={recipe.totalRatings}
                   isSmallCard={false}
-                  isActiveCard={false}
+                  isActiveCard={true}
                 />
               </View>
             ))}
