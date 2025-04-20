@@ -8,11 +8,23 @@ import {
   TouchableOpacity,
   Share,
   ImageSourcePropType,
+  Pressable,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
+
+interface Ingredient {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface Recipe {
   recipe_id: string;
@@ -20,6 +32,8 @@ interface Recipe {
   title: string;
   description: string;
   instructions: string[];
+  ingredients: Ingredient[];
+  categories: Category[];
   prep_time: number;
   cook_time: number;
   difficulty: string;
@@ -48,6 +62,25 @@ export default function RecipeDetailScreen() {
       "Arrange cherry tomatoes around the fish.",
       "Bake for 10-12 minutes until fish is cooked through and tomatoes have burst.",
       "Garnish with fresh cilantro and lime wedges before serving.",
+    ],
+    ingredients: [
+      { name: "White fish fillets", quantity: 500, unit: "g" },
+      { name: "Coconut milk", quantity: 400, unit: "ml" },
+      { name: "Cherry tomatoes", quantity: 250, unit: "g" },
+      { name: "Garlic", quantity: 3, unit: "cloves" },
+      { name: "Fresh ginger", quantity: 1, unit: "tbsp" },
+      { name: "Ground turmeric", quantity: 1, unit: "tsp" },
+      { name: "Lime", quantity: 2, unit: "whole" },
+      { name: "Fresh cilantro", quantity: 1, unit: "bunch" },
+      { name: "Salt", quantity: 1, unit: "tsp" },
+      { name: "Black pepper", quantity: 0.5, unit: "tsp" },
+    ],
+    categories: [
+      { id: "1", name: "Seafood" },
+      { id: "2", name: "Dairy-free" },
+      { id: "3", name: "Quick meals" },
+      { id: "4", name: "Baking" },
+      { id: "5", name: "Gluten-free" },
     ],
     prep_time: 20,
     cook_time: 10,
@@ -104,7 +137,26 @@ export default function RecipeDetailScreen() {
             <Text style={styles.totalRatings}>
               ({recipe.total_ratings.toLocaleString()})
             </Text>
+            <Text style={styles.totalRatings}>
+              <Text
+                onPress={() => router.push(`/profile/${recipe.user_id}`)}
+                style={{ textDecorationLine: "underline", marginLeft: 10 }}
+              >
+                By {recipe.user_id}
+              </Text>
+            </Text>
           </View>
+        </View>
+
+        {/* Categories */}
+        <View style={styles.categoriesContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {recipe.categories.map((category) => (
+              <View key={category.id} style={styles.categoryTag}>
+                <Text style={styles.categoryText}>{category.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Cooking Times */}
@@ -125,6 +177,18 @@ export default function RecipeDetailScreen() {
         {/* Description */}
         <View style={styles.sectionContainer}>
           <Text style={styles.description}>{recipe.description}</Text>
+        </View>
+
+        {/* Ingredients */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Ingredients</Text>
+          {recipe.ingredients.map((ingredient, index) => (
+            <View key={index} style={styles.ingredientItem}>
+              <Text style={styles.ingredientText}>
+                • {ingredient.quantity} {ingredient.unit} {ingredient.name}
+              </Text>
+            </View>
+          ))}
         </View>
 
         {/* Difficulty */}
@@ -207,6 +271,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  categoriesContainer: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  categoryTag: {
+    backgroundColor: "#D98324",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  categoryText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 14,
+  },
   timingContainer: {
     padding: 16,
     backgroundColor: "#EFDCAB",
@@ -243,6 +324,14 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   sectionContent: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: "#333",
+  },
+  ingredientItem: {
+    marginBottom: 8,
+  },
+  ingredientText: {
     fontSize: 16,
     lineHeight: 24,
     color: "#333",
