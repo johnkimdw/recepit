@@ -18,7 +18,7 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-
+import { router } from "expo-router";
 // Define Recipe type
 interface Recipe {
   id: number;
@@ -76,6 +76,7 @@ export default function IndexScreen() {
   // State to track current recipes
   const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
 
+
   // Animation values for the empty state
   const emptyStateOpacity = useSharedValue(0);
   const emptyStateScale = useSharedValue(0.8);
@@ -111,14 +112,6 @@ export default function IndexScreen() {
   useEffect(() => {
     console.log("Platform:", Platform.OS);
   }, []);
-
-  const handlePress = (recipe: Recipe) => {
-    //Alert.alert("Recipe Selected", `You selected the ${recipe.title} recipe`);
-  };
-
-  const handleShare = (recipe: Recipe) => {
-    Alert.alert("Share", `Sharing ${recipe.title} recipe!`);
-  };
 
   const handleIgnore = (recipe: Recipe) => {
     //Alert.alert("Ignored", `${recipe.title} has been ignored`);
@@ -171,6 +164,7 @@ export default function IndexScreen() {
                 ]}
               >
                 <RecipeCard
+                  recipe_id={recipe.id.toString()}
                   image={recipe.image}
                   title={recipe.title}
                   rating={recipe.rating}
@@ -179,8 +173,6 @@ export default function IndexScreen() {
                   prepTime={recipe.prepTime}
                   cookTime={recipe.cookTime}
                   description={recipe.description}
-                  onPress={() => handlePress(recipe)}
-                  onShare={() => handleShare(recipe)}
                   onLike={() => handleLike(recipe)}
                   onIgnore={() => handleIgnore(recipe)}
                   isActiveCard={index === 0} // Only the top card is interactive

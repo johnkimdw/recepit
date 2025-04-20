@@ -16,35 +16,33 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
     npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+Users Table
+    users(user_id, username, email, password_hash, created_at)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Follows Table
+    follows(follower_id, following_id)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Recipes Table
+    recipes(recipe_id, user_id (foreign relation to the Users table), title, description, instructions, prep_time, cook_time, difficulty, image_url, created_at, updated_at)
 
-## Get a fresh project
+Ingredients Table
+    ingredients (ingredient_id, name, calories, image_url)
 
-When you're ready, run:
+Categories Table
+    categories (category_id, name)
 
-```bash
-npm run reset-project
-```
+Recipe Ingredients Relationship (Contains) Table
+    recipe_ingredients (recipe_id, ingredient_id, quantity, unit);
+// recipe_id has foreign relationship to the Recipes Table, and ingredient_id has foreign relationship to the Ingredient Table
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Recipe Categories Relationship (Belongs) Table
+    recipe_categories (recipe_id, category_id);
+// recipe_id has foreign relationship to the Recipes Table, and category_id has foreign relationship to the Categories Table
 
-## Learn more
+Favorites Table
+    favorites (user_id, recipe_id, saved_at);
+// recipe_id has foreign relationship to the Recipes Table, and user_id has foreign relationship to the Users Table
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Reviews Table
+    reviews (review_id, user_id, recipe_id, rating, comment, created_at);
+// recipe_id has foreign relationship to the Recipes Table, and user_id has foreign relationship to the Users Table
