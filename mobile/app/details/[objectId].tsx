@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Share,
   ImageSourcePropType,
+  Pressable,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -103,6 +104,14 @@ export default function RecipeDetailScreen() {
             </View>
             <Text style={styles.totalRatings}>
               ({recipe.total_ratings.toLocaleString()})
+            </Text>
+            <Text style={styles.totalRatings}>
+              <Text
+                onPress={() => router.push(`/profile/${recipe.user_id}`)}
+                style={{ textDecorationLine: "underline", marginLeft: 10 }}
+              >
+                By {recipe.user_id}
+              </Text>
             </Text>
           </View>
         </View>
