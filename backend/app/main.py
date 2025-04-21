@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.security import get_current_user
-from app.routers import auth, users
+from app.routers import auth, users, recipes
 # Import all models to ensure proper initialization
 import app.models
 # , recipes, ingredients, categories, reviews, favorites
@@ -46,7 +46,7 @@ app.mount("/media", StaticFiles(directory=settings.MEDIA_ROOT), name="media")
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
-# app.include_router(recipes.router, prefix=f"{settings.API_V1_STR}/recipes", tags=["Recipes"])
+app.include_router(recipes.router, prefix=f"{settings.API_V1_STR}/recipes", tags=["Recipes"])
 # app.include_router(ingredients.router, prefix=f"{settings.API_V1_STR}/ingredients", tags=["Ingredients"])
 # app.include_router(categories.router, prefix=f"{settings.API_V1_STR}/categories", tags=["Categories"])
 # app.include_router(reviews.router, prefix=f"{settings.API_V1_STR}/reviews", tags=["Reviews"])

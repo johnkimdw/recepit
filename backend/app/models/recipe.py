@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, Sequence
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -6,7 +6,7 @@ from app.core.database import Base
 class Recipe(Base):
     __tablename__ = "recipes"
 
-    recipe_id = Column(Integer, primary_key=True)
+    recipe_id = Column(Integer, Sequence('recipe_id_seq', start=1, increment=1), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     title = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)

@@ -2,19 +2,28 @@ import { StyleSheet, View, Text, TextInput, ScrollView, TouchableOpacity, Image 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import Icon from 'react-native-vector-icons/AntDesign';
-
+import axios from 'axios';
+import { useApi } from "@/hooks/useApi";
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"];
-const dietaryRestrictionsOptions = ["Vegan", "Gluten-Free", "Dairy-Free", "Nut-Free", "Vegetarian", "Halal"];
+import { API_URL } from "../../config";
 
 export default function CreateScreen() {
+  const { apiCall } = useApi();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [prepTime, setPrepTime] = useState("");
+  const [cookTime, setCookTime] = useState("");
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
+
+  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState("");
 
   const [instructions, setInstructions] = useState([""]);
-  const [ingredients, setIngredients] = useState([""]);
+  const [ingredients, setIngredients] = useState<{ quantity: string; name: string }[]>([
+    { quantity: '', name: '' }
+  ]);
 
   const toggleDifficulty = (level: string) => {
     setSelectedDifficulties((prev) =>
@@ -22,17 +31,12 @@ export default function CreateScreen() {
     );
   };
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
-    );
-  };
+  // const toggleCategory = (category: string) => {
+  //   setSelectedCategories((prev) =>
+  //     prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
+  //   );
+  // };
 
-  const toggleDietaryRestriction = (restriction: string) => {
-    setSelectedDietaryRestrictions((prev) =>
-      prev.includes(restriction) ? prev.filter((item) => item !== restriction) : [...prev, restriction]
-    );
-  };
 
   const handleInstructionChange = (text: string, index: number) => {
     const newInstructions = [...instructions];
@@ -40,25 +44,26 @@ export default function CreateScreen() {
     setInstructions(newInstructions);
   };
 
-  const handleIngredientChange = (text: string, index: number) => {
+  const handleIngredientChange = (index: number, field: 'quantity' | 'name', value: string) => {
     const newIngredients = [...ingredients];
-    newIngredients[index] = text;
+    newIngredients[index][field] = value;
     setIngredients(newIngredients);
   };
+
 
   const addInstruction = () => {
     setInstructions([...instructions, ""]);
   };
 
-  const addIngredient = (index: number) => {
-    setIngredients([...ingredients, ""]);
-  };
 
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
       const newInstructions = instructions.filter((_, i) => i !== index);
       setInstructions(newInstructions);
     }
+  };
+  const addIngredient = () => {
+    setIngredients([...ingredients, { quantity: '', name: '' }]);
   };
 
   const removeIngredient = (index: number) => {
@@ -72,45 +77,131 @@ export default function CreateScreen() {
     setImageUrl(url);
   };
 
+  const handleSubmit = async () => {
+    try {
+      // const parsedIngredients = ingredients.map((ingredientStr) => {
+      //   const parsed = parseIngredient(ingredientStr);
+      //   if (parsed) return `${parsed.quantity} ${parsed.unit} ${parsed.name}`;
+      //   return null;
+      // }).filter(Boolean);
+
+      // if (parsedIngredients.length === 0) {
+      //   alert("Some ingredients could not be parsed correctly.");
+      //   return;
+      // }
+
+      const recipeData = {
+        title,
+        description,
+        ingredients,
+        instructions: instructions.join("\n"),
+        prep_time: parseInt(prepTime),
+        cook_time: parseInt(cookTime),
+        difficulty: selectedDifficulties[0] || null,
+        // category_ids: selectedCategories.map(category => categoryOptions.indexOf(category) + 1),
+        image_url: imageUrl,
+      };
+
+      console.log("Submitting:", recipeData);
+
+      const response = await apiCall(`${API_URL}/recipes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipeData),
+      });
+
+      if (!response || !response.ok) {
+        throw new Error("Failed to create recipe");
+      }
+
+      const result = await response.json();
+      console.log("Recipe created!", result);
+      alert('Recipe created successfully!');
+    } catch (error) {
+      console.error('Error creating recipe:', error.message);
+      alert('Failed to create recipe.');
+    }
+  };
+
+
+  const populateFormWithRecipe = (recipe: any) => {
+    setTitle(recipe.title || "");
+    setDescription(recipe.description || "");
+    // setIngredients(recipe.ingredients || [""]);
+    setInstructions(recipe.instructions || [""]);
+    setPrepTime(recipe.prep_time ? recipe.prep_time.toString() : "");
+    setCookTime(recipe.cook_time ? recipe.cook_time.toString() : "");
+    setSelectedDifficulties(recipe.difficulty ? [recipe.difficulty] : []);
+    // setSelectedCategories(recipe.categories || []);
+    setImageUrl(recipe.image_url || "");
+  };
+
+
+  // const parseIngredient = (ingredientStr: string) => {
+  //   const pattern = /(\d+(\.\d+)?)\s*(\w+)\s*(.+)/;
+  //   const match = ingredientStr.trim().match(pattern);
+
+  //   if (match) {
+  //     const quantity = parseFloat(match[1]);
+  //     const unit = match[3];
+  //     const name = match[4].trim();
+  //     return { quantity, unit, name };
+  //   }
+  //   return null;
+  // };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Create a New Recipe</Text>
 
-        {/* Recipe Title */}
         <Text style={styles.label}>Title</Text>
-        <TextInput style={styles.input} placeholder="Enter recipe title" />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter recipe title"
+          value={title}
+          onChangeText={setTitle}
+        />
 
-        {/* Description */}
         <Text style={styles.label}>Description</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Enter a short description"
           multiline
+          value={description}
+          onChangeText={setDescription}
         />
 
         {/* Ingredients */}
         <Text style={styles.label}>Ingredients</Text>
-        {ingredients.map((ingr, index) => (
+        {ingredients.map((ingredient, index) => (
           <View key={index} style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.instructionInput]}
-              placeholder="Ingredient"
-              value={ingr}
-              onChangeText={(text) => handleIngredientChange(text, index)}
-            />
+            <View style={styles.ingredientInputs}>
+              <TextInput
+                style={[styles.input, styles.quantityInput]}
+                placeholder="Qty"
+                value={ingredient.quantity}
+                onChangeText={(text) => handleIngredientChange(index, 'quantity', text)}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, styles.nameInput]}
+                placeholder="Ingredient"
+                value={ingredient.name}
+                onChangeText={(text) => handleIngredientChange(index, 'name', text)}
+              />
+            </View>
+
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.removeButton}
                 onPress={() => removeIngredient(index)}
               >
-                <Icon name="minuscircleo" size={24} color="white" />
+                <Icon name="minuscircleo" size={24} color="#D98324" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.addButton}
                 onPress={addIngredient}
               >
-                <Icon name="pluscircleo" size={24} color="white" />
+                <Icon name="pluscircleo" size={24} color="#D98324" />
               </TouchableOpacity>
             </View>
           </View>
@@ -130,16 +221,14 @@ export default function CreateScreen() {
             />
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.removeButton}
                 onPress={() => removeInstruction(index)}
               >
-                <Icon name="minuscircleo" size={24} color="white" />
+                <Icon name="minuscircleo" size={24} color="#D98324" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.addButton}
                 onPress={addInstruction}
               >
-                <Icon name="pluscircleo" size={24} color="white" />
+                <Icon name="pluscircleo" size={24} color="#D98324" />
               </TouchableOpacity>
             </View>
           </View>
@@ -159,13 +248,23 @@ export default function CreateScreen() {
           <Image source={{ uri: imageUrl }} style={styles.recipeImage} />
         ) : null}
 
-        {/* Prep time */}
         <Text style={styles.label}>Prep Time (minutes)</Text>
-        <TextInput style={styles.input} placeholder="e.g., 15" keyboardType="numeric" />
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., 15"
+          keyboardType="numeric"
+          value={prepTime}
+          onChangeText={setPrepTime}
+        />
 
-        {/* Cook time */}
         <Text style={styles.label}>Cook Time (minutes)</Text>
-        <TextInput style={styles.input} placeholder="e.g., 30" keyboardType="numeric" />
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., 30"
+          keyboardType="numeric"
+          value={cookTime}
+          onChangeText={setCookTime}
+        />
 
         {/* Difficulty */}
         <Text style={styles.label}>Difficulty</Text>
@@ -187,7 +286,7 @@ export default function CreateScreen() {
         </View>
 
         {/* Category */}
-        <Text style={styles.label}>Category</Text>
+        {/* <Text style={styles.label}>Category</Text>
         <View style={styles.chipsContainer}>
           {categoryOptions.map((category) => (
             <TouchableOpacity
@@ -202,31 +301,17 @@ export default function CreateScreen() {
                 {category}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          ))} */}
+        {/* </View>
+        <View style={[styles.buttonContainer, { marginTop: 16 }]}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={() => populateFormWithRecipe({ */}
 
-        {/* Dietary Restrictions */}
-        <Text style={styles.label}>Dietary Restrictions</Text>
-        <View style={[styles.chipsContainer, { marginTop: 24 }]}>
-          {dietaryRestrictionsOptions.map((restriction) => (
-            <TouchableOpacity
-              key={restriction}
-              style={[
-                styles.chip,
-                selectedDietaryRestrictions.includes(restriction) && styles.chipSelected,
-              ]}
-              onPress={() => toggleDietaryRestriction(restriction)}
-            >
-              <Text style={selectedDietaryRestrictions.includes(restriction) ? styles.chipTextSelected : styles.chipText}>
-                {restriction}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* Submit Recipe Button */}
         <View style={[styles.buttonContainer, { marginTop: 32 }]}>
-          <TouchableOpacity style={styles.submitButton} onPress={() => { /* Handle submission */ }}>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>Submit Recipe</Text>
           </TouchableOpacity>
         </View>
@@ -314,14 +399,6 @@ const styles = StyleSheet.create({
     gap: 10,
     marginLeft: 10,
   },
-  addButton: {
-    backgroundColor: "#D98324",
-    borderRadius: 20,
-  },
-  removeButton: {
-    backgroundColor: "#D98324",
-    borderRadius: 20,
-  },
   submitButton: {
     backgroundColor: "#D98324",
     paddingVertical: 12,
@@ -340,5 +417,17 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     borderRadius: 8,
     marginVertical: 16,
-  }
+  },
+  ingredientInputs: {
+    flexDirection: 'row',
+    flex: 1,
+    gap: 8,
+  },
+  quantityInput: {
+    flex: 0.3,
+  },
+  nameInput: {
+    flex: 0.7,
+  },
+
 });

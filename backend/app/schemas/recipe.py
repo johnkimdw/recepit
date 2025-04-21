@@ -12,10 +12,7 @@ class RecipeBase(BaseModel):
     prep_time: Optional[int] = None
     cook_time: Optional[int] = None
     difficulty: Optional[str] = None
-
-class RecipeCreate(RecipeBase):
-    ingredients: List[IngredientInRecipe]
-    category_ids: List[int] = []
+    image_url: Optional[str] = None
 
 class RecipeUpdate(BaseModel):
     title: Optional[str] = None
