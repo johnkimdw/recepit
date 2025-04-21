@@ -9,10 +9,12 @@ class RecipeBase(BaseModel):
     title: str
     description: Optional[str] = None
     instructions: str
+    ingredients: List[dict]  
     prep_time: Optional[int] = None
     cook_time: Optional[int] = None
     difficulty: Optional[str] = None
     image_url: Optional[str] = None
+    category_ids: Optional[List[int]] 
 
 class RecipeUpdate(BaseModel):
     title: Optional[str] = None

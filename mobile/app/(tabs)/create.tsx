@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import axios from 'axios';
 import { useApi } from "@/hooks/useApi";
 const difficultyOptions = ["Easy", "Medium", "Hard"];
-const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack"];
+const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Health", "Recipes", "Inspiration", "Budget", "Baking"];
 import { API_URL } from "../../config";
 
 export default function CreateScreen() {
@@ -15,9 +15,9 @@ export default function CreateScreen() {
   const [description, setDescription] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
 
-  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState("");
 
   const [instructions, setInstructions] = useState([""]);
@@ -25,17 +25,17 @@ export default function CreateScreen() {
     { quantity: '', name: '' }
   ]);
 
-  const toggleDifficulty = (level: string) => {
-    setSelectedDifficulties((prev) =>
-      prev.includes(level) ? prev.filter((item) => item !== level) : [...prev, level]
-    );
+  const handleDifficultySelect = (level: string) => {
+    setSelectedDifficulty(level === selectedDifficulty ? null : level);
   };
 
-  // const toggleCategory = (category: string) => {
-  //   setSelectedCategories((prev) =>
-  //     prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
-  //   );
-  // };
+  const handleCategorySelect = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
 
 
   const handleInstructionChange = (text: string, index: number) => {
@@ -76,20 +76,20 @@ export default function CreateScreen() {
   const handleImageUrlChange = (url: string) => {
     setImageUrl(url);
   };
-
+  const categoryMapping = {
+    Breakfast: 6,
+    Lunch: 8,
+    Dinner: 7,
+    Dessert: 10,
+    Snack: 9,
+    Health: 2,
+    Recipes: 1,
+    Inspiration: 3,
+    Budget: 4,
+    Baking: 5,
+  };
   const handleSubmit = async () => {
     try {
-      // const parsedIngredients = ingredients.map((ingredientStr) => {
-      //   const parsed = parseIngredient(ingredientStr);
-      //   if (parsed) return `${parsed.quantity} ${parsed.unit} ${parsed.name}`;
-      //   return null;
-      // }).filter(Boolean);
-
-      // if (parsedIngredients.length === 0) {
-      //   alert("Some ingredients could not be parsed correctly.");
-      //   return;
-      // }
-
       const recipeData = {
         title,
         description,
@@ -97,8 +97,8 @@ export default function CreateScreen() {
         instructions: instructions.join("\n"),
         prep_time: parseInt(prepTime),
         cook_time: parseInt(cookTime),
-        difficulty: selectedDifficulties[0] || null,
-        // category_ids: selectedCategories.map(category => categoryOptions.indexOf(category) + 1),
+        difficulty: selectedDifficulty,
+        category_ids: selectedCategories.map(c => categoryMapping[c]), // <-- ADD this
         image_url: imageUrl,
       };
 
@@ -127,28 +127,13 @@ export default function CreateScreen() {
   const populateFormWithRecipe = (recipe: any) => {
     setTitle(recipe.title || "");
     setDescription(recipe.description || "");
-    // setIngredients(recipe.ingredients || [""]);
     setInstructions(recipe.instructions || [""]);
     setPrepTime(recipe.prep_time ? recipe.prep_time.toString() : "");
     setCookTime(recipe.cook_time ? recipe.cook_time.toString() : "");
-    setSelectedDifficulties(recipe.difficulty ? [recipe.difficulty] : []);
-    // setSelectedCategories(recipe.categories || []);
+    setSelectedDifficulty(recipe.difficulty || null);
+    setSelectedCategory(recipe.category || null);
     setImageUrl(recipe.image_url || "");
   };
-
-
-  // const parseIngredient = (ingredientStr: string) => {
-  //   const pattern = /(\d+(\.\d+)?)\s*(\w+)\s*(.+)/;
-  //   const match = ingredientStr.trim().match(pattern);
-
-  //   if (match) {
-  //     const quantity = parseFloat(match[1]);
-  //     const unit = match[3];
-  //     const name = match[4].trim();
-  //     return { quantity, unit, name };
-  //   }
-  //   return null;
-  // };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -274,11 +259,11 @@ export default function CreateScreen() {
               key={level}
               style={[
                 styles.chip,
-                selectedDifficulties.includes(level) && styles.chipSelected,
+                selectedDifficulty === level && styles.chipSelected,
               ]}
-              onPress={() => toggleDifficulty(level)}
+              onPress={() => handleDifficultySelect(level)}
             >
-              <Text style={selectedDifficulties.includes(level) ? styles.chipTextSelected : styles.chipText}>
+              <Text style={selectedDifficulty === level ? styles.chipTextSelected : styles.chipText}>
                 {level}
               </Text>
             </TouchableOpacity>
@@ -286,7 +271,7 @@ export default function CreateScreen() {
         </View>
 
         {/* Category */}
-        {/* <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>Category</Text>
         <View style={styles.chipsContainer}>
           {categoryOptions.map((category) => (
             <TouchableOpacity
@@ -295,19 +280,15 @@ export default function CreateScreen() {
                 styles.chip,
                 selectedCategories.includes(category) && styles.chipSelected,
               ]}
-              onPress={() => toggleCategory(category)}
+              onPress={() => handleCategorySelect(category)}
             >
               <Text style={selectedCategories.includes(category) ? styles.chipTextSelected : styles.chipText}>
                 {category}
               </Text>
             </TouchableOpacity>
-          ))} */}
-        {/* </View>
-        <View style={[styles.buttonContainer, { marginTop: 16 }]}>
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={() => populateFormWithRecipe({ */}
+          ))}
 
+        </View>
 
         {/* Submit Recipe Button */}
         <View style={[styles.buttonContainer, { marginTop: 32 }]}>
