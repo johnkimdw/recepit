@@ -14,20 +14,18 @@ class IngredientUpdate(BaseModel):
     calories: Optional[float] = None
     image_url: Optional[str] = None
 
-class Ingredient(IngredientBase):
+class IngredientInDBBase(IngredientBase):
     ingredient_id: int
     
     model_config = ConfigDict(from_attributes=True)
 
 class RecipeIngredientBase(BaseModel):
     ingredient_id: int
-    quantity: float
-    unit: Optional[str] = None
+    quantity: str 
 
 class IngredientInRecipe(BaseModel):
     ingredient_id: int
     name: str
-    quantity: float
-    unit: Optional[str] = None
+    quantity: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
