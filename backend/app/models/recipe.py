@@ -6,7 +6,8 @@ from app.core.database import Base
 class Recipe(Base):
     __tablename__ = "recipes"
 
-    recipe_id = Column(Integer, Sequence("RECIPE_ID_SEQ"), primary_key=True)
+    recipe_id = Column(Integer, Sequence('recipe_id_seq', start=1, increment=1), primary_key=True)
+#     recipe_id = Column(Integer, Sequence("RECIPE_ID_SEQ"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     title = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)

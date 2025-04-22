@@ -18,7 +18,6 @@ class RecipeIngredient(Base):
 
     recipe_id = Column(Integer, ForeignKey("recipes.recipe_id"), primary_key=True)
     ingredient_id = Column(Integer, ForeignKey("ingredients.ingredient_id"), primary_key=True)
-
     quantity = Column(String(255), nullable=True)
     
     # Relationships

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from app.schemas.ingredient import RecipeIngredientBase  
 
 from app.schemas.ingredient import IngredientInRecipe
 from app.schemas.category import Category
@@ -9,13 +10,12 @@ class RecipeBase(BaseModel):
     title: str
     description: Optional[str] = None
     instructions: str
+    ingredients: List[dict]  
     prep_time: Optional[int] = None
     cook_time: Optional[int] = None
     difficulty: Optional[str] = None
-
-class RecipeCreate(RecipeBase):
-    ingredients: List[IngredientInRecipe]
-    category_ids: List[int] = []
+    image_url: Optional[str] = None
+    category_ids: Optional[List[int]] 
 
 class RecipeUpdate(BaseModel):
     title: Optional[str] = None
@@ -26,6 +26,7 @@ class RecipeUpdate(BaseModel):
     difficulty: Optional[str] = None
     ingredients: Optional[List[IngredientInRecipe]] = None
     category_ids: Optional[List[int]] = None
+    ingredients: Optional[List[RecipeIngredientBase]]  
 
 class RecipeInDBBase(RecipeBase):
     recipe_id: int
