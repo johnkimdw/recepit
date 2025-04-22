@@ -7,12 +7,11 @@ from app.core.security import get_current_user
 from datetime import datetime, timezone
 from app.models.user import User
 from app.models.category import Category, recipe_categories
-
+from app.models.ingredient import RecipeIngredient, Ingredient
 router = APIRouter()
 
 @router.post("/")
 def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Debugging: print the received recipe data
     print("Received recipe data:", recipe)
 
     new_recipe = Recipe(
@@ -37,7 +36,6 @@ def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db
     if hasattr(recipe, "category_ids") and recipe.category_ids:
         for category_id in recipe.category_ids:
             category = db.query(Category).filter_by(category_id=category_id).first()
-            print("Fetched category:", category)
             
             if category:
                 db.execute(
@@ -47,6 +45,26 @@ def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db
                 raise HTTPException(status_code=404, detail=f"Category {category_id} not found")
         
         db.commit()
-        print(f"Categories associated with recipe {new_recipe.title}")
+
+    # Insert recipe_ingredients
+    if hasattr(recipe, "ingredients") and recipe.ingredients:
+        for ingredient_data in recipe.ingredients:
+            ingredient = db.query(Ingredient).filter(Ingredient.name == ingredient_data['name']).first()
+            if not ingredient:
+                ingredient = Ingredient(
+                    name=ingredient_data['name'],
+                )
+                db.add(ingredient)
+                db.flush()
+
+            recipe_ingredient = RecipeIngredient(
+                recipe_id=new_recipe.recipe_id,
+                ingredient_id=ingredient.ingredient_id,
+                quantity=ingredient_data["quantity"], 
+            )
+            db.add(recipe_ingredient)
+
+        db.commit()
+
 
     return new_recipe

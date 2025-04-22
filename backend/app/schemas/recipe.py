@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from app.schemas.ingredient import RecipeIngredientBase  
 
 from app.schemas.ingredient import IngredientInRecipe
 from app.schemas.category import Category
@@ -25,6 +26,7 @@ class RecipeUpdate(BaseModel):
     difficulty: Optional[str] = None
     ingredients: Optional[List[IngredientInRecipe]] = None
     category_ids: Optional[List[int]] = None
+    ingredients: Optional[List[RecipeIngredientBase]]  
 
 class RecipeInDBBase(RecipeBase):
     recipe_id: int
