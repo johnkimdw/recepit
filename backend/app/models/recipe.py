@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, Sequence
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -6,13 +6,13 @@ from app.core.database import Base
 class Recipe(Base):
     __tablename__ = "recipes"
 
-    recipe_id = Column(Integer, primary_key=True)
+    recipe_id = Column(Integer, Sequence("RECIPE_ID_SEQ"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     title = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     instructions = Column(Text, nullable=False)
-    prep_time = Column(Integer, nullable=True)  # in minutes
-    cook_time = Column(Integer, nullable=True)  # in minutes
+    prep_time = Column(String(40), nullable=True)  # in minutes
+    cook_time = Column(String(40), nullable=True)  # in minutes
     difficulty = Column(String(20), nullable=True)  # Easy, Medium, Hard
     image_url = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.current_timestamp())
