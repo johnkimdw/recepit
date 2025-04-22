@@ -14,7 +14,7 @@ class ReviewUpdate(BaseModel):
     rating: Optional[float] = Field(None, ge=1, le=5)
     comment: Optional[str] = None
 
-class Review(ReviewBase):
+class ReviewInDBBase(ReviewBase):
     review_id: int
     user_id: int
     created_at: datetime

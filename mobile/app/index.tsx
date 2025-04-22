@@ -86,8 +86,7 @@ export default function WelcomeScreen() {
     const message = await register(userData);
 
     if (message === "success") {
-      setIsLoginMode(true);
-      setShowLoginContent(true);
+      switchToLogin();
     } else {
       setError(message);
     }

@@ -212,7 +212,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const data = response.data;
       console.log("Registration response:", data);
-      setUserID(data.user_id);
 
       return "success";
     } catch (error: any) {

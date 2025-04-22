@@ -11,7 +11,7 @@ class CategoryCreate(CategoryBase):
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
 
-class Category(CategoryBase):
+class CategoryInDBBase(CategoryBase):
     category_id: int
     
     model_config = ConfigDict(from_attributes=True)
