@@ -17,8 +17,10 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router } from "expo-router";
 interface RecipeCardProps {
+  recipe_id: string;
   image: any; // This can be a require() result or a URI object
   title: string;
   rating: number;
@@ -28,8 +30,6 @@ interface RecipeCardProps {
   cookTime?: string;
   description?: string;
   isSmallCard?: boolean;
-  onPress?: () => void;
-  onShare?: () => void;
   onLike?: () => void;
   onIgnore?: () => void;
   isActiveCard?: boolean; // New prop to identify the top card
@@ -39,6 +39,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
 
 const RecipeCard: React.FC<RecipeCardProps> = ({
+  recipe_id,
   image,
   title,
   rating,
@@ -48,8 +49,6 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   cookTime,
   description,
   isSmallCard = false,
-  onPress,
-  onShare,
   onLike,
   onIgnore,
   isActiveCard = true, // Default to true for backward compatibility
@@ -180,6 +179,10 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     };
   });
 
+  const onReadMore = () => {
+    router.push(`/details/${recipe_id}`);
+  };
+
   // Return the card component
   return (
     <View style={styles.cardContainer}>
@@ -187,9 +190,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <TouchableOpacity
             style={styles.cardContent}
-            onPress={onPress}
+            onPress={onReadMore}
             activeOpacity={0.9}
-            disabled={!isActiveCard} // Only allow pressing the top card
+            disabled={!isActiveCard || !isSmallCard} // Only allow pressing the top card or it is small card
           >
             <View
               style={[
@@ -284,11 +287,11 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                   </Text>
 
                   <TouchableOpacity
-                    style={styles.shareButton}
-                    onPress={onShare}
+                    style={styles.readMore}
+                    onPress={onReadMore}
                     disabled={!isActiveCard} // Only allow sharing the top card
                   >
-                    <Ionicons name="share-outline" size={24} color="#333" />
+                    <MaterialIcons name="read-more" size={24} color="black" />
                   </TouchableOpacity>
                 </>
               )}
@@ -380,7 +383,7 @@ const styles = StyleSheet.create({
     color: "#444",
     marginBottom: 8,
   },
-  shareButton: {
+  readMore: {
     position: "absolute",
     bottom: 10,
     right: 10,

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Sequence
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -13,7 +13,7 @@ recipe_categories = Table(
 class Category(Base):
     __tablename__ = "categories"
 
-    category_id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, Sequence("CATEGORY_ID_SEQ"), primary_key=True)
     name = Column(String(50), nullable=False, unique=True)
     
     # Relationships

@@ -1,12 +1,12 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, Sequence
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class Ingredient(Base):
     __tablename__ = "ingredients"
 
-    ingredient_id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False, unique=True)
+    ingredient_id = Column(Integer, Sequence("INGREDIENT_ID_SEQ"), primary_key=True)
+    name = Column(String(255), nullable=False, unique=True)
     calories = Column(Float, nullable=True)
     image_url = Column(String(255), nullable=True)
     
@@ -18,7 +18,7 @@ class RecipeIngredient(Base):
 
     recipe_id = Column(Integer, ForeignKey("recipes.recipe_id"), primary_key=True)
     ingredient_id = Column(Integer, ForeignKey("ingredients.ingredient_id"), primary_key=True)
-    quantity = Column(String(100), nullable=False)
+    quantity = Column(String(255), nullable=True)
     
     # Relationships
     recipe = relationship("Recipe", back_populates="ingredients")
