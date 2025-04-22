@@ -16,10 +16,8 @@ export default function CreateScreen() {
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
-
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState("");
-
   const [instructions, setInstructions] = useState([""]);
   const [ingredients, setIngredients] = useState<{ quantity: string; name: string }[]>([
     { quantity: '', name: '' }
@@ -37,7 +35,6 @@ export default function CreateScreen() {
     }
   };
 
-
   const handleInstructionChange = (text: string, index: number) => {
     const newInstructions = [...instructions];
     newInstructions[index] = text;
@@ -49,12 +46,9 @@ export default function CreateScreen() {
     newIngredients[index][field] = value;
     setIngredients(newIngredients);
   };
-
-
   const addInstruction = () => {
     setInstructions([...instructions, ""]);
   };
-
 
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
@@ -76,7 +70,7 @@ export default function CreateScreen() {
   const handleImageUrlChange = (url: string) => {
     setImageUrl(url);
   };
-  const categoryMapping = {
+  const categoryMapping: { [key: string]: number } = {
     Breakfast: 6,
     Lunch: 8,
     Dinner: 7,
@@ -98,11 +92,9 @@ export default function CreateScreen() {
         prep_time: parseInt(prepTime),
         cook_time: parseInt(cookTime),
         difficulty: selectedDifficulty,
-        category_ids: selectedCategories.map(c => categoryMapping[c]), // <-- ADD this
+        category_ids: selectedCategories.map(c => categoryMapping[c]),
         image_url: imageUrl,
       };
-
-      console.log("Submitting:", recipeData);
 
       const response = await apiCall(`${API_URL}/recipes/`, {
         method: 'POST',
@@ -115,24 +107,10 @@ export default function CreateScreen() {
       }
 
       const result = await response.json();
-      console.log("Recipe created!", result);
-      alert('Recipe created successfully!');
+      console.log('Recipe created successfully:', result);
     } catch (error) {
       console.error('Error creating recipe:', error.message);
-      alert('Failed to create recipe.');
     }
-  };
-
-
-  const populateFormWithRecipe = (recipe: any) => {
-    setTitle(recipe.title || "");
-    setDescription(recipe.description || "");
-    setInstructions(recipe.instructions || [""]);
-    setPrepTime(recipe.prep_time ? recipe.prep_time.toString() : "");
-    setCookTime(recipe.cook_time ? recipe.cook_time.toString() : "");
-    setSelectedDifficulty(recipe.difficulty || null);
-    setSelectedCategory(recipe.category || null);
-    setImageUrl(recipe.image_url || "");
   };
 
   return (
