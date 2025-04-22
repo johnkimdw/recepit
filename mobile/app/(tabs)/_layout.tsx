@@ -6,12 +6,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { HapticTab } from "@/components/HapticTab";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useAuth } from "@/hooks/useAuth";
 
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { userID } = useAuth();
+  const profileHref = userID ? `/profile/${userID}` : "/profile";
+  // const href={{ pathname: "/profile/[id]", params: { id: userID }}}
+
 
   return (
     <Tabs
@@ -135,8 +141,38 @@ export default function TabLayout() {
               Profile
             </Text>
           ),
+          // href: "/profile/{{userID}}"
+          // href: profileHref
+          href: userID
+          ? {
+              pathname: "/profile/[userId]",
+              params: { userId: userID },
+            }
+          : "/",
+      
+          // href:"/profile"
         }}
       />
+      {/* <Tabs.Screen
+        name="(profile)" // Use a group name for the profile stack
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color={focused ? "#D98324" : "gray"}
+              />
+            </View>
+          ),
+          tabBarLabel: ({ focused }) => (
+            <Text style={{ color: focused ? "#D98324" : "gray", fontSize: 10 }}>
+              Profile
+            </Text>
+          ),
+        }}
+      /> */}
       <Tabs.Screen
         name="grocery-list" 
         options={{
