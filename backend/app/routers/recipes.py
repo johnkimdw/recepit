@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.recipe import Recipe
-from app.schemas.recipe import RecipeBase, RecipeDetail
+from app.schemas.recipe import RecipeBase, RecipeDetail, RecipeInDBBase, SimpleRecipe, RecipeSmallCard
 from app.schemas.ingredient import IngredientInRecipe
 from app.schemas.category import CategoryInDBBase
 from app.schemas.review import ReviewInDBBase
@@ -12,6 +12,10 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.models.category import Category, recipe_categories
 from app.models.ingredient import RecipeIngredient, Ingredient
+from app.models.review import Review
+from sqlalchemy import func, text, or_
+import random
+from typing import List
 
 router = APIRouter()
 
@@ -74,6 +78,42 @@ def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db
 
     return new_recipe
 
+@router.get("/featured", response_model=SimpleRecipe)
+def get_featured_recipes(db: Session = Depends(get_db)):
+    # get one featured recipe that has average rating over 4.5
+    subquery = (
+        db.query(Recipe.recipe_id)
+        .join(Review)
+        .group_by(Recipe.recipe_id)
+        .having(func.avg(Review.rating) >= 4.5)
+        .order_by(text("DBMS_RANDOM.VALUE"))
+        .limit(1)
+        .subquery()
+    )
+
+    featured_recipe = db.query(Recipe).join(subquery, Recipe.recipe_id == subquery.c.recipe_id).first()
+
+    return featured_recipe
+
+@router.get("/category/{category}", response_model=List[RecipeSmallCard])
+def get_recipes_by_category(category: str, db: Session = Depends(get_db)):
+    # find the category id first, case insensitive
+    category = db.query(Category).filter(func.lower(Category.name) == category.strip().lower()).first()
+
+    # find recipes that has the category id in its recipe.category
+    recipes = db.query(Recipe).join(Recipe.categories).filter(Category.category_id == category.category_id).all()
+
+    # ramdomly pick 10 results
+    recipes = random.sample(recipes, 10)
+
+    for recipe in recipes:
+        total_ratings = len(recipe.reviews)
+        average_rating = sum(review.rating for review in recipe.reviews) / len(recipe.reviews) if recipe.reviews else None
+        recipe.average_rating = average_rating
+        recipe.total_ratings = total_ratings
+
+    return recipes
+
 @router.get("/details/{recipe_id}", response_model=RecipeDetail)
 def get_recipe_details(recipe_id: int, db: Session = Depends(get_db)):
     recipe = db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first()
@@ -109,3 +149,38 @@ def get_recipe_details(recipe_id: int, db: Session = Depends(get_db)):
     )
 
     return recipe_details
+
+@router.get("/search", response_model=List[SimpleRecipe])
+def search_recipes(query: str, db: Session = Depends(get_db)):
+    clean_q = query.strip().lower()
+    if not clean_q:
+        raise HTTPException(400, detail="Query must not be empty")
+
+    # Oracle doesn't have ILIKE, so we force both sides to lower-case
+    results = (
+        db.query(Recipe)
+        .filter(
+            or_(
+                func.lower(Recipe.title).like(f"%{clean_q}%"),
+            )
+        )
+        .order_by(Recipe.title)   # any ordering you like
+        .limit(8)
+        .all()
+    )
+
+    if len(results) < 10:
+        more_results = (
+            db.query(Recipe)
+            .filter(
+                or_(
+                    func.lower(Recipe.description).like(f"%{clean_q}%"),
+                )
+            )
+            .order_by(Recipe.title)   # any ordering you like
+            .limit(8 - len(results))
+            .all()
+        )
+        results.extend(more_results)
+
+    return results

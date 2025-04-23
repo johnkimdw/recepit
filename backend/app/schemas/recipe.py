@@ -39,6 +39,24 @@ class RecipeInDBBase(RecipeBase):
     
     model_config = ConfigDict(from_attributes=True)
 
+class SimpleRecipe(BaseModel):
+    recipe_id: int
+    title: str
+    image_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class RecipeSmallCard(BaseModel):
+    recipe_id: int
+    title: str
+    image_url: Optional[str] = None
+    average_rating: Optional[float] = None
+    prep_time: Optional[str] = None
+    cook_time: Optional[str] = None
+    total_ratings: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 class Recipe(RecipeInDBBase):
     pass
 

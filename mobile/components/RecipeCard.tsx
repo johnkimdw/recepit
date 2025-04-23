@@ -17,7 +17,7 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
 interface RecipeCardProps {
   recipe_id: string;
@@ -25,9 +25,8 @@ interface RecipeCardProps {
   title: string;
   rating: number;
   totalRatings: number;
-  totalTime: string;
-  prepTime?: string;
-  cookTime?: string;
+  prepTime: string;
+  cookTime: string;
   description?: string;
   isSmallCard?: boolean;
   onLike?: () => void;
@@ -44,7 +43,6 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   title,
   rating,
   totalRatings,
-  totalTime,
   prepTime,
   cookTime,
   description,
@@ -265,15 +263,17 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               </View>
 
               {isSmallCard ? (
-                <View style={[styles.timeContainer, { marginBottom: 2 }]}>
-                  <Text style={[styles.timeText, { fontSize: 9 }]}>
-                    Total time: {totalTime}
+                <View style={styles.timeContainer}>
+                  <Text style={styles.smallCardDetailtimeText}>
+                    Prep time: {prepTime}
+                  </Text>
+                  <Text style={styles.smallCardDetailtimeText}>
+                    Cook time: {cookTime}
                   </Text>
                 </View>
               ) : (
                 <>
                   <View style={styles.timeContainer}>
-                    <Text style={styles.timeText}>Total time: {totalTime}</Text>
                     <Text style={styles.detailtimeText}>
                       Prep time: {prepTime}
                     </Text>
@@ -374,6 +374,11 @@ const styles = StyleSheet.create({
   },
   detailtimeText: {
     fontSize: 11,
+    color: "#666",
+    marginBottom: 2,
+  },
+  smallCardDetailtimeText: {
+    fontSize: 9,
     color: "#666",
     marginBottom: 2,
   },
