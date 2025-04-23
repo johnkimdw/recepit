@@ -27,8 +27,8 @@ export function useApi() {
           return apiCall(url, options);
         } else {
           // If refresh failed, redirect to login
-          console.log('Refresh token failed, return null');
-          return null;
+          console.log('Refresh token failed');
+          throw new Error('Refresh token failed');
         }
       }
       
