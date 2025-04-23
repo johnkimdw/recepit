@@ -5,7 +5,7 @@ import cx_Oracle
 # Set Oracle client library path if needed (only if running on a different machine)
 # If running on the same machine as Oracle, this should be automatically detected
 def setup_oracle_client():
-    oracle_client_path = "/Users/lukecao/Downloads/instantclient_23_3"
+    oracle_client_path = "/Users/johnkim/Downloads/instantclient_23_3"
     if os.path.exists(oracle_client_path):
         cx_Oracle.init_oracle_client(lib_dir=oracle_client_path)
     else:

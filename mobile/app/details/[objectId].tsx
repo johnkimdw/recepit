@@ -16,7 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { API_URL } from "@/config";
-
+// [objectId].tsx is a dynamic route s.t. objectId becomes the recipe ID when user navigates to this screen
+// sends http request to backend for recipe info
 interface Ingredient {
   name: string;
   quantity: number;
