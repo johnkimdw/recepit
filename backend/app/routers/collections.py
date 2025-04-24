@@ -55,12 +55,9 @@ def get_saved_recipes(limit: int = None, user: User = Depends(get_current_user),
 def get_recent_recipes(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # get all recipes that the user has saved, sorted from latest to earliest
     result = get_user_saved_recipes(user, db, limit=20)
-    for recipe in result:
-        print(recipe.recipe_id)
     return result
 
-@router.get("/search/likes", response_model=List[RecipeSmallCard])
-def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def helper_search_liked_recipes(query: str, limit: int, user: User, db: Session):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
@@ -98,8 +95,7 @@ def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_cu
 
     return results
 
-@router.get("/search/saves", response_model=List[RecipeSmallCard])
-def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def helper_search_saved_recipes(query: str, limit: int, user: User, db: Session):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
@@ -137,12 +133,21 @@ def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_cu
 
     return results
 
+
+@router.get("/search/likes", response_model=List[RecipeSmallCard])
+def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return helper_search_liked_recipes(query, limit, user, db)
+
+@router.get("/search/saves", response_model=List[RecipeSmallCard])
+def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return helper_search_saved_recipes(query, limit, user, db)
+
 @router.get("/search", response_model=List[RecipeSmallCard])
 def search_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
     
-    results = search_liked_recipes(query, limit // 2, user, db)
-    results.extend(search_saved_recipes(query, limit // 2, user, db))
+    results = helper_search_liked_recipes(query, limit // 2, user, db)
+    results.extend(helper_search_saved_recipes(query, limit // 2, user, db))
     return results
