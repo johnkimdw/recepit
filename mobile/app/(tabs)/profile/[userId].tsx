@@ -52,8 +52,9 @@ import {
     const [error, setError] = useState<string | null>(null);
     const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   
-    // Determine if this is the current user's profile
     const isCurrentUser = userID == userId;
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
   
     console.log(isCurrentUser)
 
@@ -66,8 +67,8 @@ import {
   
     // Fetch user data
     useEffect(() => {
-        console.log(userId)
-        console.log(userID)
+        // console.log(userId)
+        // console.log(userID)
       const fetchUserProfile = async () => {
         try {
           setIsLoading(true);
@@ -107,6 +108,35 @@ import {
     // Handle back button press
     const handleBack = () => {
       router.back();
+    };
+
+    const handleFollowAction = async () => {
+      if (followLoading) return;
+      
+      try {
+        setFollowLoading(true);
+        const response = await apiCall(
+          `${API_URL}/users/follow/${userId}`,
+          {
+            method: 'POST',
+          }
+        );
+        
+        if (response && response.ok) {
+          // update the UI to show following state
+          setIsFollowing(true);
+          
+          // refresh user data to get updated follower count from backend
+          setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
+        } else {
+          const errorData = await response.json();
+          console.error("Error following user:", errorData);
+        }
+      } catch (error) {
+        console.error("Error in follow action:", error);
+      } finally {
+        setFollowLoading(false);
+      }
     };
   
     if (isLoading) {
@@ -266,13 +296,27 @@ import {
           {!isCurrentUser && (
             <View style={styles.actionContainer}>
               <TouchableOpacity 
-                style={styles.followButton}
-                onPress={() => console.log("Follow/Unfollow action")}
-              >
-                <Text style={styles.followButtonText}>Follow</Text>
-              </TouchableOpacity>
+  style={[
+    styles.followButton,
+    isFollowing && styles.followingButton,
+    followLoading && styles.disabledButton
+  ]}
+  onPress={handleFollowAction}
+  disabled={followLoading}
+>
+  {followLoading ? (
+    <ActivityIndicator size="small" color="#fff" />
+  ) : (
+    <Text style={styles.followButtonText}>
+      {isFollowing ? 'Following' : 'Follow'}
+    </Text>
+  )}
+</TouchableOpacity>
             </View>
           )}
+
+
+          
         </ScrollView>
       </SafeAreaView>
     );
@@ -430,4 +474,11 @@ import {
       fontFamily: "Lora-Bold",
       fontSize: 16,
     },
+    followingButton: {
+      backgroundColor: "#555", // Different color for following state
+    },
+    disabledButton: {
+      opacity: 0.7,
+    },
   });
+  
