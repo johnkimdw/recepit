@@ -11,8 +11,8 @@ import {
   import { Ionicons } from "@expo/vector-icons";
   import { useState, useEffect } from "react";
   import { useRouter, useLocalSearchParams } from "expo-router";
-  import { useAuth } from "../../../hooks/useAuth";
-  import { useApi } from "../../../hooks/useApi";
+  import { useAuth } from "@/hooks/useAuth";
+  import { useApi } from "@/hooks/useApi";
   import { API_URL } from "@/config";
   import { StatusBar } from "expo-status-bar";
 

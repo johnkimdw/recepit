@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import RecipeCard from "@/components/RecipeCard";
 import { LinearGradient } from "expo-linear-gradient";
 import { API_URL } from "@/config";
+import { useAuth } from "@/hooks/useAuth";
+import { useApi } from "@/hooks/useApi";
 import { router } from "expo-router";
 import { Animated } from "react-native";
 
@@ -76,6 +78,13 @@ export default function BrowseScreen() {
   });
   const [isCategoryLoading, setIsCategoryLoading] = useState(true);
 
+  const [username, setUsername] = useState("Guest");
+  const { userID } = useAuth();
+  const { apiCall } = useApi();
+
+
+
+
   useEffect(() => {
     const fetchFeaturedRecipe = async () => {
       try {
@@ -115,6 +124,24 @@ export default function BrowseScreen() {
       fetchCategory();
     }
   }, [activeCategory]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (userID) {
+        try {
+          const response = await apiCall(`${API_URL}/users/${userID}`);
+          const userData = await response.json();
+          if (userData.username) {
+            setUsername(userData.username);
+          }
+        } catch (error) {
+          console.error("Error fetching user info:", error);
+        }
+      }
+    };
+    
+    fetchUserInfo();
+  }, [userID, apiCall]);
 
   // Search functionality
   const handleSearch = async (query: string) => {
@@ -187,7 +214,7 @@ export default function BrowseScreen() {
           {!isSearchMode ? (
             <>
               <View>
-                <Text style={styles.greeting}>{`Good Morning,\nLuke Cao`}</Text>
+                <Text style={styles.greeting}>{`Good Morning,\n${username}`}</Text>
               </View>
               <TouchableOpacity
                 style={styles.searchButton}
