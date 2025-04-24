@@ -148,7 +148,7 @@ export default function TabLayout() {
               pathname: "/profile/[userId]",
               params: { userId: userID },
             }
-          : "/",
+          : "/profile",
       
           // href:"/profile"
         }}
