@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { API_URL } from "@/config";
+import { useApi } from "@/hooks/useApi";
 
 interface Ingredient {
   name: string;
@@ -53,6 +54,8 @@ interface Recipe {
   average_rating: number;
   reviews_count: number;
   favorites_count: number;
+
+  is_saved: boolean;
 }
 
 const api_recipe_url = API_URL + "/recipes";
@@ -62,18 +65,26 @@ export default function RecipeDetailScreen() {
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  const { apiCall } = useApi();
 
   useEffect(() => {
     const fetchRecipeDetails = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${api_recipe_url}/details/${objectId}`);
+        const response = await apiCall(`${api_recipe_url}/details/${objectId}`);
         const data = await response.json();
         data.instructions = data.instructions.split("\n");
         console.log(data);
         setRecipe(data);
+        setIsSaved(data.is_saved);
       } catch (error) {
         console.error("Error fetching recipe:", error);
+        setError("Please login to view this recipe");
       } finally {
         setIsLoading(false);
       }
@@ -92,6 +103,23 @@ export default function RecipeDetailScreen() {
     router.back();
   };
 
+  const toggleSave = async () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+    }
+    timer.current = setTimeout(async () => {
+      if (isSaved) {
+        await apiCall(`${api_recipe_url}/unsave/${objectId}`, {
+          method: "PATCH",
+        });
+      } else {
+        await apiCall(`${api_recipe_url}/save/${objectId}`, {
+          method: "PATCH",
+        });
+      }
+    }, 1000);
+    setIsSaved(!isSaved);
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -114,7 +142,18 @@ export default function RecipeDetailScreen() {
       ) : recipe ? (
         <ScrollView style={styles.scrollContainer}>
           {/* Recipe Image */}
-          <Image source={recipe.image_url} style={styles.recipeImage} />
+          <View style={styles.imageContainer}>
+            <Image source={recipe.image_url} style={styles.recipeImage} />
+
+            <View style={styles.saveButtonContainer}>
+              <Ionicons
+                name={isSaved ? "star" : "star-outline"}
+                size={18}
+                color="#D98324"
+                onPress={toggleSave}
+              />
+            </View>
+          </View>
 
           {/* Recipe Title and Ratings */}
           <View style={styles.titleContainer}>
@@ -208,7 +247,7 @@ export default function RecipeDetailScreen() {
         </ScrollView>
       ) : (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Recipe not found</Text>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
     </SafeAreaView>
@@ -254,6 +293,20 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+  },
+  imageContainer: {
+    width: "100%",
+    height: 300,
+    resizeMode: "cover",
+    position: "relative",
+  },
+  saveButtonContainer: {
+    position: "absolute",
+    bottom: 8,
+    right: 12,
+    backgroundColor: "#E0E0E0",
+    padding: 4,
+    borderRadius: 100,
   },
   recipeImage: {
     width: "100%",

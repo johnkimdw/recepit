@@ -68,5 +68,6 @@ class RecipeDetail(Recipe):
     average_rating: Optional[float] = None
     reviews_count: Optional[int] = None
     favorites_count: Optional[int] = None
+    is_saved: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)

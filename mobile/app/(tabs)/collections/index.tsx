@@ -23,10 +23,10 @@ import { Animated } from "react-native";
 
 // Define types for recipe data
 interface Recipe {
-  id: string;
+  recipe_id: number;
   title: string;
-  image: any;
-  rating: number;
+  image_url: any;
+  average_rating: number;
   total_ratings: number;
   prep_time: string;
   cook_time: string;
@@ -170,10 +170,10 @@ export default function CollectionsScreen() {
   }) => (
     <View style={styles.recipeCardContainer}>
       <RecipeCard
-        recipe_id={item.id}
-        image={item.image}
+        recipe_id={item.recipe_id.toString()}
+        image={item.image_url}
         title={item.title}
-        rating={item.rating}
+        rating={item.average_rating}
         prepTime={item.prep_time}
         cookTime={item.cook_time}
         totalRatings={item.total_ratings}
@@ -310,7 +310,7 @@ export default function CollectionsScreen() {
               <FlatList
                 data={recentlySavedRecipes}
                 renderItem={renderRecipeItem}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.recipe_id.toString()}
                 numColumns={2}
                 scrollEnabled={false}
               />

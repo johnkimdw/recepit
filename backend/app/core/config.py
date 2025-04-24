@@ -23,12 +23,12 @@ class Settings(BaseSettings):
     
     # CORS settings
     BACKEND_CORS_ORIGINS: List[str] = [
-        # "http://localhost:8081", 
-        # "http://127.0.0.1:8081",
-        # "exp://10.24.197.61:8081",  # Expo on iPhone
-        # "http://10.24.197.61:8081",  # HTTP on iPhone
-        # "http://10.24.197.61:8000",  # Backend direct access
-        "*"  # Allow all origins temporarily for debugging
+        "http://localhost:8081", 
+        "http://127.0.0.1:8081",
+        "exp://10.24.197.61:8081",  # Expo on iPhone
+        "http://10.24.197.61:8081",  # HTTP on iPhone
+        "http://10.24.197.61:8000",  # Backend direct access
+        # "*"  # Allow all origins temporarily for debugging
     ]
     
     # media settings
