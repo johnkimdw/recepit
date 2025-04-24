@@ -106,6 +106,9 @@ def get_follow_stats(db: Session, user_id: int) -> Dict[str, int]:
         follows.c.follower_id == user_id
     ).scalar()
     
+    if not followers_count: followers_count = 0
+    if not following_count: following_count = 0
+    
     return {
         "followers_count": followers_count,
         "following_count": following_count

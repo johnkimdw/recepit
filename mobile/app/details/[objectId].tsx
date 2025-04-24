@@ -18,6 +18,7 @@ import { StatusBar } from "expo-status-bar";
 import { API_URL } from "@/config";
 import { useApi } from "@/hooks/useApi";
 
+
 interface Ingredient {
   name: string;
   quantity: number;
