@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.recipe import Recipe
@@ -16,6 +16,9 @@ from app.models.review import Review
 from sqlalchemy import func, text, or_
 import random
 from typing import List
+from app.core.aws import generate_presigned_url  
+import os 
+from fastapi import File
 
 router = APIRouter()
 
@@ -77,6 +80,11 @@ def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db
 
 
     return new_recipe
+
+@router.get("/generate-presigned-url")
+def get_presigned_url():
+    return generate_presigned_url()
+
 
 @router.get("/featured", response_model=SimpleRecipe)
 def get_featured_recipes(db: Session = Depends(get_db)):

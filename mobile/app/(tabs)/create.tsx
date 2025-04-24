@@ -7,9 +7,29 @@ import { useApi } from "@/hooks/useApi";
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Health", "Recipes", "Inspiration", "Budget", "Baking"];
 import { API_URL } from "../../config";
+import * as ImagePicker from 'expo-image-picker';
+import mime from 'mime';
+
 
 export default function CreateScreen() {
   const { apiCall } = useApi();
+
+  const [pickedImageUri, setPickedImageUri] = useState("");
+
+  const pickAndUploadImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const image = result.assets[0];
+      setPickedImageUri(image.uri);
+      console.log("picked image, click upload image to continue")
+    }
+  };
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -67,9 +87,6 @@ export default function CreateScreen() {
     }
   };
 
-  const handleImageUrlChange = (url: string) => {
-    setImageUrl(url);
-  };
   const categoryMapping: { [key: string]: number } = {
     Breakfast: 6,
     Lunch: 8,
@@ -82,18 +99,60 @@ export default function CreateScreen() {
     Budget: 4,
     Baking: 5,
   };
+
+  const handleImageUpload = async () => {
+    if (!pickedImageUri) {
+      alert("Please pick an image first.");
+      return;
+    }
+
+    const mimeType = mime.getType(pickedImageUri) || "image/jpeg";
+    try {
+      const res = await apiCall(`${API_URL}/recipes/generate-presigned-url`);
+      const { upload_url, image_url } = await res.json();
+      console.log("Generated Image URL:", image_url);
+
+      const imageBlob = await (await fetch(pickedImageUri)).blob();
+      const uploadRes = await fetch(upload_url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": mimeType,
+        },
+        body: imageBlob,
+      });
+
+      if (!uploadRes.ok) {
+        alert("Failed to upload image.");
+        return;
+      }
+
+      // Successfully uploaded image, now set the image URL
+      setImageUrl(image_url);
+      console.log("image uploaded successfully")
+    } catch (err) {
+      console.error("Error uploading image", err);
+      alert("An error occurred during the image upload.");
+    }
+  };
+
+
   const handleSubmit = async () => {
+    if (!imageUrl) {
+      alert("Please upload an image first.");
+      return;
+    }
+
     try {
       const recipeData = {
         title,
         description,
         ingredients,
         instructions: instructions.join("\n"),
-        prep_time: parseInt(prepTime),
-        cook_time: parseInt(cookTime),
+        prep_time: prepTime,
+        cook_time: cookTime,
         difficulty: selectedDifficulty,
         category_ids: selectedCategories.map(c => categoryMapping[c]),
-        image_url: imageUrl,
+        image_url: imageUrl, 
       };
 
       const response = await apiCall(`${API_URL}/recipes/`, {
@@ -112,6 +171,7 @@ export default function CreateScreen() {
       console.error('Error creating recipe:', error.message);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -197,18 +257,23 @@ export default function CreateScreen() {
           </View>
         ))}
 
-        {/* Image URL Input */}
-        <Text style={styles.label}>Recipe Image URL</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter image URL"
-          value={imageUrl}
-          onChangeText={handleImageUrlChange}
-        />
+        {/* Image Upload Buttons */}
+        <View style={styles.imageButtonsContainer}>
+          <TouchableOpacity style={styles.pickImageButton} onPress={pickAndUploadImage}>
+            <Text style={styles.buttonText}>Select Image</Text>
+          </TouchableOpacity>
+          <View style={{ width: 10 }} /> {/* Add some space between the buttons */}
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleImageUpload}
+            disabled={!pickedImageUri}
+          >
+            <Text style={styles.buttonText}>Upload Image</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Display image from image url*/}
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.recipeImage} />
+        {pickedImageUri ? (
+          <Image source={{ uri: pickedImageUri }} style={styles.recipeImage} />
         ) : null}
 
         <Text style={styles.label}>Prep Time (minutes)</Text>
@@ -269,13 +334,15 @@ export default function CreateScreen() {
         </View>
 
         {/* Submit Recipe Button */}
-        <View style={[styles.buttonContainer, { marginTop: 32 }]}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit Recipe</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          disabled={!imageUrl} // Disable submit button until image is uploaded
+        >
+          <Text style={styles.buttonText}>Submit Recipe</Text>
+        </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 
@@ -364,10 +431,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
+    marginBottom: 10,
+    marginTop: 10,
   },
   submitButtonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   recipeImage: {
@@ -388,5 +457,29 @@ const styles = StyleSheet.create({
   nameInput: {
     flex: 0.7,
   },
-
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  imageButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  pickImageButton: {
+    backgroundColor: '#D98324',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadButton: {
+    backgroundColor: '#D98324',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
