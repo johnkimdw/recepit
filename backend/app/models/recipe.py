@@ -24,4 +24,5 @@ class Recipe(Base):
     ingredients = relationship("RecipeIngredient", back_populates="recipe")
     categories = relationship("Category", secondary="recipe_categories", back_populates="recipes")
     favorites = relationship("Favorite", back_populates="recipe")
+    saves = relationship("Save", back_populates="recipe")
     reviews = relationship("Review", back_populates="recipe")

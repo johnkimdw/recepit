@@ -24,6 +24,7 @@ class User(Base):
     # Relationships
     recipes = relationship("Recipe", back_populates="user")
     favorites = relationship("Favorite", back_populates="user")
+    saves = relationship("Save", back_populates="user")
     reviews = relationship("Review", back_populates="user")
     
     # Self-referential relationship for follows

@@ -64,7 +64,6 @@ export default function BrowseScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SmallRecipe[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const searchInputRef = useRef<TextInput>(null);
   const searchAnimation = useRef(new Animated.Value(0)).current;
   const timer = useRef<NodeJS.Timeout | null>(null);
 
@@ -217,7 +216,6 @@ export default function BrowseScreen() {
                   style={styles.searchIcon}
                 />
                 <TextInput
-                  ref={searchInputRef}
                   style={styles.searchInput}
                   placeholder="Search recipes..."
                   value={searchQuery}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,75 +7,108 @@ import {
   Dimensions,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import RecipeCard from "../../../components/RecipeCard";
+import { API_URL } from "@/config";
+import { useApi } from "@/hooks/useApi";
+import { router } from "expo-router";
 
 // Define types for recipe data
 interface Recipe {
-  id: string;
+  recipe_id: number;
   title: string;
-  image: any;
-  rating: number;
-  totalRatings: number;
-  totalTime: string;
+  image_url: string;
+  average_rating: number;
+  prep_time: string;
+  cook_time: string;
+  total_ratings: number;
 }
 
-// Sample data for liked recipes
-const likedRecipes: Recipe[] = [
-  {
-    id: "1",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 136,
-    totalTime: "30 minutes",
-  },
-  {
-    id: "2",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 134,
-    totalTime: "30 minutes",
-  },
-  {
-    id: "3",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 130,
-    totalTime: "30 minutes",
-  },
-  {
-    id: "4",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 134,
-    totalTime: "30 minutes",
-  },
-  {
-    id: "5",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 146,
-    totalTime: "30 minutes",
-  },
-  {
-    id: "6",
-    title: "Coconut Fish and Tomato Bake",
-    image: require("@/assets/images/pasta.png"),
-    rating: 4.5,
-    totalRatings: 134,
-    totalTime: "30 minutes",
-  },
-];
+type SmallRecipe = {
+  recipe_id: number;
+  title: string;
+  image_url: string;
+};
 
+const api_url_collections = API_URL + "/collections";
 export default function LikesScreen() {
-  const [searchQuery, setSearchQuery] = React.useState("");
+  // Search-related state
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SmallRecipe[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  const { apiCall } = useApi();
+
+  const [savedRecipes, setSavedRecipes] = React.useState<Recipe[]>([]);
+
+  React.useEffect(() => {
+    const fetchSavedRecipes = async () => {
+      try {
+        const response = await apiCall(api_url_collections + "/saves");
+        const data = await response?.json();
+        setSavedRecipes(data);
+      } catch (error) {
+        console.error("Error fetching saved recipes:", error);
+        console.log("likely the authentication fails");
+        router.navigate("/");
+      }
+    };
+    fetchSavedRecipes();
+  }, []);
+
+  const toggleSearchMode = () => {
+    if (isSearchMode) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+    setIsSearchMode(!isSearchMode);
+  };
+
+  // Search functionality
+  const handleSearch = async (query: string) => {
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response = await apiCall(
+        `${api_url_collections}/search/saves?query=${encodeURIComponent(query)}`
+      );
+      const data = await response?.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Error searching recipes:", error);
+      setSearchResults([]);
+      setIsSearching(false);
+      router.navigate("/");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+
+    if (searchQuery.trim().length === 0) {
+      setSearchResults([]);
+      return;
+    }
+
+    timer.current = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 300);
+  }, [searchQuery]);
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "bottom", "left"]}>
@@ -84,7 +117,10 @@ export default function LikesScreen() {
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+        <TouchableOpacity
+          onPress={toggleSearchMode}
+          style={styles.searchContainer}
+      >
         <Ionicons
           name="search"
           size={18}
@@ -98,30 +134,65 @@ export default function LikesScreen() {
           onChangeText={setSearchQuery}
           placeholderTextColor="#999"
         />
-      </View>
+      </TouchableOpacity>
 
       {/* Recipe Grid */}
-      <FlatList
-        data={likedRecipes}
-        renderItem={({ item }) => (
-          <View style={styles.recipeCardContainer}>
-            <RecipeCard
-              image={item.image}
-              title={item.title}
-              rating={item.rating}
-              totalRatings={item.totalRatings}
-              totalTime={item.totalTime}
-              isSmallCard={true}
-              isActiveCard={false}
-              onPress={() => console.log(`Recipe ${item.id} pressed`)}
+      {isSearchMode ? (
+        <View style={styles.searchResultsContainer}>
+          {isSearching ? (
+            <ActivityIndicator
+              size="large"
+              color="#D98324"
+              style={styles.searchingIndicator}
             />
-          </View>
-        )}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+          ) : searchResults.length > 0 ? (
+            <View style={styles.searchResultsList}>
+              {searchResults.map((recipe) => (
+                <TouchableOpacity
+                  key={recipe.recipe_id}
+                  style={styles.searchResultItem}
+                  onPress={() => {
+                    router.push(`/details/${recipe.recipe_id}`);
+                  }}
+                >
+                  <Image
+                    source={{ uri: recipe.image_url }}
+                    style={styles.searchResultImage}
+                  />
+                  <View style={styles.searchResultTextContainer}>
+                    <Text style={styles.searchResultTitle} numberOfLines={2}>
+                      {recipe.title}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <FlatList
+          data={savedRecipes}
+          renderItem={({ item }) => (
+            <View style={styles.recipeCardContainer}>
+              <RecipeCard
+                recipe_id={item.recipe_id.toString()}
+                image={item.image_url}
+                title={item.title}
+                rating={item.average_rating}
+                totalRatings={item.total_ratings}
+                prepTime={item.prep_time}
+                cookTime={item.cook_time}
+                isSmallCard={true}
+                isActiveCard={true}
+              />
+            </View>
+          )}
+          keyExtractor={(item) => item.recipe_id.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -176,5 +247,44 @@ const styles = StyleSheet.create({
     height: cardWidth,
     marginBottom: 16,
     marginRight: card_padding_horizontal,
+  },
+  searchResultsContainer: {
+    width: "100%",
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  searchingIndicator: {
+    marginTop: 30,
+  },
+  searchResultsList: {
+    width: "100%",
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    marginBottom: 15,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  searchResultImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  searchResultTextContainer: {
+    flex: 1,
+    marginLeft: 15,
+    justifyContent: "space-between",
+  },
+  searchResultTitle: {
+    fontSize: 16,
+    fontFamily: "Lora-Bold",
+    color: "#333",
+    marginBottom: 8,
   },
 });
