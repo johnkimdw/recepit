@@ -25,13 +25,13 @@ def get_recommendations(
 ):
     """Get personalized recipe recommendations for the user to swipe on."""
     recipes = get_next_recommendations(db, user.user_id, limit)
-    print(f"got these recipes in GET_RECOMMENDATIONS via get_next route:\n {recipes}")
+    print(f"got these recipes in GET_RECOMMENDATIONS via get_next route:\n {len(recipes)}")
     
     if not recipes:
         # Generate recommendations if none exist
         generate_recommendations(db, user.user_id)
         recipes = get_next_recommendations(db, user.user_id, limit)
-    print(f"got these recipes in GET_RECOMMENDATIONS via gen_recs + get_next route:\n {recipes}")
+    print(f"got these recipes in GET_RECOMMENDATIONS via gen_recs + get_next route:\n {len(recipes)}")
     
     return recipes
 
