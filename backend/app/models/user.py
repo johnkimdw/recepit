@@ -26,6 +26,9 @@ class User(Base):
     favorites = relationship("Favorite", back_populates="user")
     saves = relationship("Save", back_populates="user")
     reviews = relationship("Review", back_populates="user")
+    dislikes = relationship("Dislike", back_populates="user")
+    recommendations = relationship("RecipeRecommendation", back_populates="user")
+    seen_recipes = relationship("SeenRecipe", back_populates="user")
     
     # Self-referential relationship for follows
     followers = relationship(

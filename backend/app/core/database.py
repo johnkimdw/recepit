@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base
 
 from sqlalchemy.orm import sessionmaker
@@ -18,11 +18,30 @@ except Exception as e:
 # Create Oracle engine
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URI,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800,  # Reconnect after 30 minutes
+    pool_size=10,        
+    max_overflow=20,    
+    pool_timeout=60,     
+    pool_recycle=300     # Recycle connections every 5 minutes
 )
+
+
+# # Add statement timeout event listener
+# def set_session_timeout(dbapi_connection, connection_record):
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("ALTER SESSION SET STATEMENT_TIMEOUT=30000")  # 30 seconds
+#     cursor.close()
+
+# event.listen(engine, 'connect', set_session_timeout)
+
+# # Add monitoring listeners (optional)
+# @event.listens_for(engine, "checkout")
+# def receive_checkout(dbapi_connection, connection_record, connection_proxy):
+#     print(f"Connection checkout: {engine.pool.checkedin()}/{engine.pool.size()} available")
+
+# @event.listens_for(engine, "checkin")
+# def receive_checkin(dbapi_connection, connection_record):
+#     print(f"Connection checkin: {engine.pool.checkedin()}/{engine.pool.size()} available")
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
