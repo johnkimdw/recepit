@@ -15,6 +15,7 @@ import { Platform } from "react-native";
 
 type AuthContextType = {
   userID: string | null;
+  username: string | null;
   isLoading: boolean;
   accessToken: string | null;
   login: (username: string, password: string) => Promise<string>;
@@ -32,6 +33,7 @@ export type UserData = {
 // Create auth context with default values
 const AuthContext = createContext<AuthContextType>({
   userID: null,
+  username: null,
   isLoading: true,
   accessToken: null,
   login: async (username: string, password: string) =>
@@ -51,6 +53,7 @@ const api_auth = API_URL + "/auth";
 // Auth provider component
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userID, setUserID] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
@@ -82,6 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
           if (response.data) {
             setUserID(response.data.user_id);
+            setUsername(response.data.username);
           } else {
             // If token is invalid, try refreshing
             const refreshed = await refresh();
@@ -173,20 +177,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUserID(null);
     await AsyncStorage.removeItem("accessToken");
     await AsyncStorage.removeItem("refreshToken");
-    // TODO: implement logout
-    // try {
-    //   const response = await axios.post(
-    //     api + "logout/",
-    //     {},
-    //     { withCredentials: true }
-    //   );
-
-    //   if (!response.data) {
-    //     throw new Error("Logout failed");
-    //   }
-    // } catch (error) {
-    //   console.error("Logout failed:", error);
-    // }
   };
 
   const register = async (userData: UserData) => {
@@ -281,6 +271,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Value object to be provided to consumers
   const value = {
     userID,
+    username,
     isLoading,
     accessToken,
     login,

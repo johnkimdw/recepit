@@ -121,7 +121,7 @@ export default function CollectionsScreen() {
       console.error("Error searching recipes:", error);
       setSearchResults([]);
       setIsSearching(false);
-      router.navigate("/");
+      window.location.href = "/";
     } finally {
       setIsSearching(false);
     }

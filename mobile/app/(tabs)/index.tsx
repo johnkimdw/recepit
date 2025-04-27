@@ -26,7 +26,6 @@ interface Recipe {
   title: string;
   rating: number;
   totalRatings: number;
-  totalTime: string;
   prepTime: string;
   cookTime: string;
   description: string;
@@ -41,7 +40,6 @@ export default function IndexScreen() {
       title: "Coconut Fish and Tomato Bake",
       rating: 4,
       totalRatings: 10184,
-      totalTime: "30 minutes",
       prepTime: "10 minutes",
       cookTime: "20 minutes",
       description:
@@ -53,7 +51,6 @@ export default function IndexScreen() {
       title: "Spicy Vegetable Curry",
       rating: 5,
       totalRatings: 8742,
-      totalTime: "45 minutes",
       prepTime: "15 minutes",
       cookTime: "30 minutes",
       description:
@@ -65,7 +62,6 @@ export default function IndexScreen() {
       title: "Classic Beef Stew",
       rating: 4.5,
       totalRatings: 6531,
-      totalTime: "2 hours",
       prepTime: "20 minutes",
       cookTime: "1 hour 40 minutes",
       description:
@@ -169,7 +165,6 @@ export default function IndexScreen() {
                   title={recipe.title}
                   rating={recipe.rating}
                   totalRatings={recipe.totalRatings}
-                  totalTime={recipe.totalTime}
                   prepTime={recipe.prepTime}
                   cookTime={recipe.cookTime}
                   description={recipe.description}
