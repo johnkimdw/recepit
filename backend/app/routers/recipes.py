@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.category import Category, recipe_categories
 from app.models.ingredient import RecipeIngredient, Ingredient
 from app.models.review import Review
+from app.models.save import Save
 from sqlalchemy import func, text, or_
 import random
 from typing import List
@@ -123,7 +124,7 @@ def get_recipes_by_category(category: str, db: Session = Depends(get_db)):
     return recipes
 
 @router.get("/details/{recipe_id}", response_model=RecipeDetail)
-def get_recipe_details(recipe_id: int, db: Session = Depends(get_db)):
+def get_recipe_details(recipe_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     recipe = db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first()
 
     if not recipe:
@@ -154,7 +155,14 @@ def get_recipe_details(recipe_id: int, db: Session = Depends(get_db)):
         average_rating=average_rating,
         reviews_count=review_count,
         favorites_count=favorite_count,
+
+        is_saved=False
     )
+
+    for save in user.saves:
+        if save.recipe_id == recipe_id:
+            recipe_details.is_saved = True
+            break
 
     return recipe_details
 
@@ -192,3 +200,33 @@ def search_recipes(query: str, db: Session = Depends(get_db)):
         results.extend(more_results)
 
     return results
+
+@router.patch("/save/{recipe_id}")
+def save_recipe(recipe_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    recipe = db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    save = Save(
+        user_id=user.user_id,
+        recipe_id=recipe_id,
+        saved_at=datetime.now(timezone.utc),
+    )
+    db.add(save)
+    db.commit()
+
+    return {"message": "Recipe saved"}
+
+@router.patch("/unsave/{recipe_id}")
+def unsave_recipe(recipe_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    recipe = db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    save = db.query(Save).filter(Save.user_id == user.user_id, Save.recipe_id == recipe_id).first()
+    if not save:
+        raise HTTPException(status_code=404, detail="Save not found")
+    
+    db.delete(save)
+    db.commit()
+    return {"message": "Recipe unsaved"}

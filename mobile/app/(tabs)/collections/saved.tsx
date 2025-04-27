@@ -46,10 +46,12 @@ export default function LikesScreen() {
   const { apiCall } = useApi();
 
   const [savedRecipes, setSavedRecipes] = React.useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchSavedRecipes = async () => {
       try {
+        setIsLoading(true);
         const response = await apiCall(api_url_collections + "/saves");
         const data = await response?.json();
         setSavedRecipes(data);
@@ -57,6 +59,8 @@ export default function LikesScreen() {
         console.error("Error fetching saved recipes:", error);
         console.log("likely the authentication fails");
         router.navigate("/");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchSavedRecipes();
@@ -137,7 +141,11 @@ export default function LikesScreen() {
       </TouchableOpacity>
 
       {/* Recipe Grid */}
-      {isSearchMode ? (
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D98324" />
+        </View>
+      ) : isSearchMode ? (
         <View style={styles.searchResultsContainer}>
           {isSearching ? (
             <ActivityIndicator
@@ -237,6 +245,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     height: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     paddingHorizontal: section_padding_horizontal,

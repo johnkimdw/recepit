@@ -34,30 +34,30 @@ def get_liked_recipes(user: User = Depends(get_current_user), db: Session = Depe
 
     return liked_recipes
 
-@router.get("/saves", response_model=List[RecipeSmallCard])
-def get_saved_recipes(limit: int = None, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # get all recipes that the user has saved, sorted from latest to earliest
-    if limit:
-        saved_recipes = db.query(Recipe).join(Save).filter(Save.user_id == user.user_id).order_by(Save.saved_at.desc()).limit(limit)
-    else:
-        saved_recipes = db.query(Recipe).join(Save).filter(Save.user_id == user.user_id).order_by(Save.saved_at.desc()).all()
+def get_user_saved_recipes(user: User, db: Session, limit: int = None):
+    query = db.query(Recipe).join(Save).filter(Save.user_id == user.user_id).order_by(Save.saved_at.desc())
+    saved_recipes = query.limit(limit).all() if limit else query.all()
 
     for recipe in saved_recipes:
         total_ratings = len(recipe.reviews)
-        average_rating = sum(review.rating for review in recipe.reviews) / len(recipe.reviews) if recipe.reviews else None
+        average_rating = sum(review.rating for review in recipe.reviews) / total_ratings if total_ratings > 0 else None
         recipe.average_rating = average_rating
         recipe.total_ratings = total_ratings
 
     return saved_recipes
 
+@router.get("/saves", response_model=List[RecipeSmallCard])
+def get_saved_recipes(limit: int = None, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # get all recipes that the user has saved, sorted from latest to earliest
+    return get_user_saved_recipes(user, db, limit=limit)
+
 @router.get("/recent", response_model=List[RecipeSmallCard])
 def get_recent_recipes(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # get all recipes that the user has saved, sorted from latest to earliest
-    saved_recipes = get_saved_recipes(limit=20, user=user, db=db)
-    return saved_recipes
+    result = get_user_saved_recipes(user, db, limit=20)
+    return result
 
-@router.get("/search/likes", response_model=List[RecipeSmallCard])
-def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def helper_search_liked_recipes(query: str, limit: int, user: User, db: Session):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
@@ -95,8 +95,7 @@ def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_cu
 
     return results
 
-@router.get("/search/saves", response_model=List[RecipeSmallCard])
-def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def helper_search_saved_recipes(query: str, limit: int, user: User, db: Session):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
@@ -134,12 +133,21 @@ def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_cu
 
     return results
 
+
+@router.get("/search/likes", response_model=List[RecipeSmallCard])
+def search_liked_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return helper_search_liked_recipes(query, limit, user, db)
+
+@router.get("/search/saves", response_model=List[RecipeSmallCard])
+def search_saved_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return helper_search_saved_recipes(query, limit, user, db)
+
 @router.get("/search", response_model=List[RecipeSmallCard])
 def search_recipes(query: str, limit: int = 8, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     clean_q = query.strip().lower()
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
     
-    results = search_liked_recipes(query, limit // 2, user, db)
-    results.extend(search_saved_recipes(query, limit // 2, user, db))
+    results = helper_search_liked_recipes(query, limit // 2, user, db)
+    results.extend(helper_search_saved_recipes(query, limit // 2, user, db))
     return results
