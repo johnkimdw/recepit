@@ -10,6 +10,7 @@ import {
   ImageSourcePropType,
   Pressable,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,7 +18,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { API_URL } from "@/config";
 import { useApi } from "@/hooks/useApi";
-
 
 interface Ingredient {
   name: string;
@@ -37,6 +37,16 @@ interface User {
   created_at: string;
 }
 
+interface Review {
+  recipe_id: number;
+  rating: number;
+  comment: string;
+  review_id: number;
+  user_id: number;
+  user_name: string;
+  created_at: string;
+}
+
 interface Recipe {
   recipe_id: string;
   user_id: string;
@@ -45,6 +55,7 @@ interface Recipe {
   instructions: string[];
   ingredients: Ingredient[];
   categories: Category[];
+  reviews: Review[];
   user: User;
   prep_time: number;
   cook_time: number;
@@ -68,6 +79,12 @@ export default function RecipeDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState("");
+  const [userRating, setUserRating] = useState(0);
+  const [userComment, setUserComment] = useState("");
+  const [expandedReviews, setExpandedReviews] = useState<number[]>([]);
+
+  const [submitError, setSubmitError] = useState("");
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const timer = useRef<NodeJS.Timeout | null>(null);
 
@@ -121,6 +138,56 @@ export default function RecipeDetailScreen() {
     }, 1000);
     setIsSaved(!isSaved);
   };
+
+  const toggleExpandReview = (reviewId: number) => {
+    setExpandedReviews((prev) =>
+      prev.includes(reviewId)
+        ? prev.filter((id) => id !== reviewId)
+        : [...prev, reviewId]
+    );
+  };
+
+  const handleRatingPress = (rating: number) => {
+    setUserRating(rating);
+  };
+
+  const submitReview = async () => {
+    if (userRating === 0) {
+      // Show an error or alert that rating is required
+      console.log("Please select a rating");
+      setSubmitError("Please select a rating");
+      return;
+    }
+
+    console.log("Submitting review:", { userRating, userComment });
+    
+    try {
+      setSubmitLoading(true);
+      const response = await apiCall(`${api_recipe_url}/reviews/${objectId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rating: userRating, comment: userComment }),
+      });
+      const data: Review = await response.json();
+      console.log(data);
+
+      setUserComment("");
+      setUserRating(0);
+      setSubmitError("");
+
+      if (response.ok && recipe) {
+        recipe.reviews.unshift(data);
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      setSubmitError("Error submitting review");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -172,9 +239,7 @@ export default function RecipeDetailScreen() {
                   />
                 ))}
               </View>
-              <Text style={styles.totalRatings}>
-                ({recipe.reviews_count})
-              </Text>
+              <Text style={styles.totalRatings}>({recipe.reviews_count})</Text>
               <Text style={styles.totalRatings}>
                 <Text
                   onPress={() => router.push(`/profile/${recipe.user_id}`)}
@@ -241,6 +306,129 @@ export default function RecipeDetailScreen() {
                 <Text style={styles.instructionText}>{step}</Text>
               </View>
             ))}
+          </View>
+
+          {/* Reviews Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+
+            {/* Add Review Form */}
+            <View style={styles.addReviewContainer}>
+              <Text style={styles.addReviewTitle}>Add Your Review</Text>
+
+              {/* Star Rating Selection */}
+              <View style={styles.ratingInputContainer}>
+                <Text style={styles.ratingInputLabel}>Your Rating:</Text>
+                <View style={styles.starInputContainer}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => handleRatingPress(star)}
+                    >
+                      <Ionicons
+                        name={userRating >= star ? "star" : "star-outline"}
+                        size={30}
+                        color="#D98324"
+                        style={styles.starInput}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Comment Input */}
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Write your comment (optional)"
+                multiline
+                numberOfLines={4}
+                value={userComment}
+                onChangeText={setUserComment}
+              />
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={submitReview}
+              >
+                {submitLoading ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit Review</Text>
+                )}
+              </TouchableOpacity>
+
+              {submitError && (
+                <Text style={styles.submitErrorText}>{submitError}</Text>
+              )}
+            </View>
+
+            {/* User Reviews */}
+            <View style={styles.userReviewsContainer}>
+              <Text style={styles.userReviewsTitle}>
+                User Reviews ({recipe.reviews.length})
+              </Text>
+
+              {recipe.reviews.length > 0 ? (
+                recipe.reviews.map((review) => (
+                  <View key={review.review_id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Text style={styles.reviewUsername}>
+                        {review.user_name}
+                      </Text>
+                      <Text style={styles.reviewDate}>
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+
+                    <View style={styles.reviewRating}>
+                      {[...Array(5)].map((_, i) => (
+                        <Ionicons
+                          key={i}
+                          name="star"
+                          size={16}
+                          color={i < review.rating ? "#D98324" : "#D9D9D9"}
+                        />
+                      ))}
+                    </View>
+
+                    {review.comment && (
+                      <View>
+                        <TouchableOpacity
+                          onPress={() => toggleExpandReview(review.review_id)}
+                          style={styles.commentToggle}
+                        >
+                          <Text style={styles.commentToggleText}>
+                            {expandedReviews.includes(review.review_id)
+                              ? "Hide Comment"
+                              : "Show Comment"}
+                          </Text>
+                          <Ionicons
+                            name={
+                              expandedReviews.includes(review.review_id)
+                                ? "chevron-up"
+                                : "chevron-down"
+                            }
+                            size={16}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+
+                        {expandedReviews.includes(review.review_id) && (
+                          <Text style={styles.reviewComment}>
+                            {review.comment}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noReviewsText}>
+                  No reviews yet. Be the first to review!
+                </Text>
+              )}
+            </View>
           </View>
 
           {/* Bottom Spacing */}
@@ -425,7 +613,122 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
   },
+  addReviewContainer: {
+    backgroundColor: "#FFFDFA",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  addReviewTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  ratingInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  ratingInputLabel: {
+    fontSize: 16,
+    marginRight: 10,
+    color: "#333",
+  },
+  starInputContainer: {
+    flexDirection: "row",
+  },
+  starInput: {
+    marginRight: 5,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    padding: 12,
+    height: 100,
+    textAlignVertical: "top",
+    marginBottom: 16,
+    backgroundColor: "#FFF",
+  },
+  submitButton: {
+    backgroundColor: "#D98324",
+    borderRadius: 8,
+    padding: 12,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  userReviewsContainer: {
+    marginTop: 20,
+  },
+  userReviewsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  reviewItem: {
+    backgroundColor: "#FFFDFA",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  reviewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  reviewUsername: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#333",
+  },
+  reviewDate: {
+    color: "#888",
+    fontSize: 14,
+  },
+  reviewRating: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  commentToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  commentToggleText: {
+    color: "#666",
+    marginRight: 5,
+    fontSize: 14,
+  },
+  reviewComment: {
+    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#444",
+  },
+  noReviewsText: {
+    fontSize: 16,
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 8,
+  },
   bottomSpace: {
     height: 80,
+  },
+  submitErrorText: {
+    color: "red",
+    marginTop: 10,
+    textAlign: "center",
   },
 });
