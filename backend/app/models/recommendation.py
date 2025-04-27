@@ -6,7 +6,8 @@ from app.core.database import Base
 class RecipeRecommendation(Base):
     __tablename__ = "recipe_recommendations"
 
-    recommendation_id = Column(Integer, Sequence("recommendation_id_seq"), primary_key=True)
+    # recommendation_id = Column(Integer, Sequence("recommendation_id_seq"), primary_key=True)
+    recommendation_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     recipe_id = Column(Integer, ForeignKey("recipes.recipe_id"), nullable=False)
     recommendation_score = Column(Float, default=0.0)

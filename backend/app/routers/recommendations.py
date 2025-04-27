@@ -19,21 +19,37 @@ router = APIRouter()
 
 @router.get("/", response_model=List[RecipeSmallCard])
 def get_recommendations(
-    limit: int = 5,
+    limit: int = 10,
     user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
     """Get personalized recipe recommendations for the user to swipe on."""
-    recipes = get_next_recommendations(db, user.user_id, limit)
-    print(f"got these recipes in GET_RECOMMENDATIONS via get_next route:\n {len(recipes)}")
-    
-    if not recipes:
-        # Generate recommendations if none exist
-        generate_recommendations(db, user.user_id)
+    try:
         recipes = get_next_recommendations(db, user.user_id, limit)
-    print(f"got these recipes in GET_RECOMMENDATIONS via gen_recs + get_next route:\n {len(recipes)}")
+        print(f"got these recipes in GET_RECOMMENDATIONS via get_next route:\n {len(recipes)}")
+        return recipes
+    except Exception as e:
+        # Log the error but return an empty list instead of crashing
+        print(f"Error in recommendation endpoint: {e}")
+        return []
+
+# @router.get("/", response_model=List[RecipeSmallCard])
+# def get_recommendations(
+#     limit: int = 5,
+#     user: User = Depends(get_current_user), 
+#     db: Session = Depends(get_db)
+# ):
+#     """Get personalized recipe recommendations for the user to swipe on."""
+#     recipes = get_next_recommendations(db, user.user_id, limit)
+#     print(f"got these recipes in GET_RECOMMENDATIONS via get_next route:\n {len(recipes)}")
     
-    return recipes
+#     if not recipes:
+#         # Generate recommendations if none exist
+#         generate_recommendations(db, user.user_id)
+#         recipes = get_next_recommendations(db, user.user_id, limit)
+#     print(f"got these recipes in GET_RECOMMENDATIONS via gen_recs + get_next route:\n {len(recipes)}")
+    
+#     return recipes
 
 @router.post("/interactions")
 def create_interaction(
@@ -55,7 +71,7 @@ def create_interaction(
     record_interaction(db, user.user_id, interaction.recipe_id, interaction.interaction_type)
     
     # Schedule similarity recalculation in the background
-    background_tasks.add_task(calculate_user_similarity, db, user.user_id)
+    # background_tasks.add_task(calculate_user_similarity, db, user.user_id)
     
     return {"status": "success"}
 
@@ -66,6 +82,7 @@ def refresh_recommendations(
     db: Session = Depends(get_db)
 ):
     """Force refresh recommendations for the user."""
+    print("IN REFRESH: ADDED GENERATE_RECOMMENDATIONS TO BACKGROUND TASKS")
     background_tasks.add_task(generate_recommendations, db, user.user_id)
     return {"status": "Refreshing recommendations"}
 

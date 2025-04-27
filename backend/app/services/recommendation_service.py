@@ -1,12 +1,14 @@
 # app/services/recommendation_service.py
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 import cx_Oracle
 from typing import List, Dict, Any
 
 from app.models.recipe import Recipe
 from app.models.review import Review
 from app.models.user import User
+from app.models.recommendation import RecipeRecommendation
+from app.models.dislike import Dislike
 
 def calculate_user_similarity(db: Session, user_id: int, top_n: int = 10):
     """Call the database procedure to calculate user similarity."""
@@ -47,6 +49,79 @@ def calculate_user_similarity(db: Session, user_id: int, top_n: int = 10):
                 print(f"Error in second attempt at calculating user similarity: {inner_e}")
                 return False
         return False
+    
+def generate_simple_recommendations(db, user_id, limit=10):
+    """Simple recommendation system"""
+    try:
+        # exclude disliked + already recommended recipes
+        # exclude user's disliked recipes 
+        disliked_recipes = db.query(Dislike.recipe_id).filter(Dislike.user_id == user_id).all()
+        disliked_recipe_ids = [r.recipe_id for r in disliked_recipes] if disliked_recipes else []
+        
+        # recommended recipes
+        existing_recommendations = db.query(RecipeRecommendation.recipe_id).filter(
+            RecipeRecommendation.user_id == user_id
+        ).all()
+        existing_rec_ids = [r.recipe_id for r in existing_recommendations] if existing_recommendations else []
+        
+        # combine IDs to exclude
+        # exclude_ids = list(set(disliked_recipe_ids + existing_rec_ids))
+        exclude_ids = tuple(set(disliked_recipe_ids + existing_rec_ids))
+
+        
+        # query for recipes, using DBMS_RANDOM.VALUE for Oracle
+        query = text("""
+        SELECT r.recipe_id 
+        FROM recipes r
+        WHERE (:exclude_empty = 1 OR r.recipe_id NOT IN :exclude_ids)
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST :limit ROWS ONLY
+    """).bindparams(bindparam('exclude_ids', expanding=True))
+
+        # Execute with parameters
+ 
+        
+        exclude_empty = 1 if not exclude_ids else 0
+        result = db.execute(
+            query, 
+            {
+                "exclude_ids": tuple(exclude_ids) if exclude_ids else (-1,),  # Dummy value if empty
+                "exclude_empty": exclude_empty,
+                "limit": limit
+            }
+        )
+        
+        recipe_ids = [row[0] for row in result]
+        
+        # create recommendation entries
+        for recipe_id in recipe_ids:
+            recommendation = RecipeRecommendation(
+                user_id=user_id,
+                recipe_id=recipe_id,
+                recommendation_score=0.5,  # default score
+                status='pending'
+            )
+            db.add(recommendation)
+        
+        db.commit()
+        
+        # Get the actual recipes
+        recipes = db.query(Recipe).filter(Recipe.recipe_id.in_(recipe_ids)).all()
+        
+        # Update recommendations to 'shown'
+        db.query(RecipeRecommendation).filter(
+            RecipeRecommendation.user_id == user_id,
+            RecipeRecommendation.recipe_id.in_(recipe_ids),
+            RecipeRecommendation.status == 'pending'
+        ).update({"status": "shown"}, synchronize_session=False)
+        
+        db.commit()
+        return recipes
+    except Exception as e:
+        db.rollback()
+        print(f"Error in generate_simple_recommendations: {e}")
+        return []
+
 
 def generate_recommendations(db: Session, user_id: int, count: int = 20):
     """Call the database procedure to generate recommendations."""
@@ -56,6 +131,49 @@ def generate_recommendations(db: Session, user_id: int, count: int = 20):
     )
     db.commit()
 
+# new simpler version 
+# def get_next_recommendations(db, user_id, limit):
+#     """Get the next batch of recommendations for a user."""
+#     try:
+#         # First check for existing pending recommendations
+#         pending_recommendations = db.query(RecipeRecommendation).filter(
+#             RecipeRecommendation.user_id == user_id,
+#             RecipeRecommendation.status == 'pending'
+#         ).order_by(RecipeRecommendation.recommendation_score.desc()).limit(limit).all()
+        
+#         if pending_recommendations:
+#             # Get recipe IDs
+#             recipe_ids = [rec.recipe_id for rec in pending_recommendations]
+            
+#             # Get the recipes
+#             recipes = db.query(Recipe).filter(Recipe.recipe_id.in_(recipe_ids)).all()
+            
+#             # Update status to 'shown'
+#             for rec in pending_recommendations:
+#                 rec.status = 'shown'
+            
+#             db.commit()
+#             return recipes
+        
+#         # No pending recommendations, use the simple approach
+#         return generate_simple_recommendations(db, user_id, limit)
+#     except Exception as e:
+#         db.rollback()
+#         print(f"Error in get_next_recommendations: {e}")
+#         # Final fallback - get random recipes without any filtering
+#         try:
+#             from sqlalchemy.sql import text
+#             result = db.execute(
+#                 text("SELECT recipe_id FROM recipes ORDER BY DBMS_RANDOM.VALUE FETCH FIRST :limit ROWS ONLY"),
+#                 {"limit": limit}
+#             )
+#             recipe_ids = [row[0] for row in result]
+#             return db.query(Recipe).filter(Recipe.recipe_id.in_(recipe_ids)).all()
+#         except Exception as inner_e:
+#             print(f"Final fallback failed: {inner_e}")
+#             return []
+
+# old version using procedures
 def get_next_recommendations(db: Session, user_id: int, limit: int = 10):
     """Get next batch of recommendations using the database procedure."""
     
@@ -92,7 +210,6 @@ def get_next_recommendations(db: Session, user_id: int, limit: int = 10):
             
             # Add average rating and total ratings to each recipe
             for recipe in recipes:
-                # You might need to adjust this based on your actual schema
                 # reviews = db.query(recipe.reviews).filter_by(recipe_id=recipe.recipe_id).all()
                 reviews = db.query(Review).filter(Review.recipe_id == recipe.recipe_id).all()
                 recipe.total_ratings = len(reviews)
