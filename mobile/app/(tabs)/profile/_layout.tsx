@@ -7,26 +7,36 @@ export default function ProfileLayout() {
   const { userID, isLoading } = useAuth();
 
   return (
-    <Stack 
+    <Stack
       screenOptions={{
-        headerShown: false, // Hide the header to use our custom header in the component
-        contentStyle: {
-          backgroundColor: "#F8F5E9", // Match the background color from the design
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: "#F8F5E9",
         },
-        animation: Platform.OS === "ios" ? "default" : "fade_from_bottom",
+        headerShadowVisible: false,
+        headerBackTitle: "Profile",
+        headerTintColor: "#000000",
+        headerTitle: "",
       }}
     >
-      <Stack.Screen 
-        name="index" 
-        options={{ 
+      <Stack.Screen
+        name="index"
+        options={{
           headerShown: false,
-        }} 
+        }}
       />
-      <Stack.Screen 
-        name="[userId]" 
-        options={{ 
+      <Stack.Screen
+        name="[userId]"
+        options={{
           headerShown: false,
-        }} 
+        }}
+      />
+      <Stack.Screen
+        name="grocery-list"
+        options={{
+          animation: "slide_from_right",
+          presentation: "card",
+        }}
       />
     </Stack>
   );

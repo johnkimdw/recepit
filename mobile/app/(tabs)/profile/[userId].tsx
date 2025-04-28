@@ -16,6 +16,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useApi } from "../../../hooks/useApi";
 import { API_URL } from "@/config";
 import { StatusBar } from "expo-status-bar";
+import RecipeCard from "@/components/RecipeCard";
 
 //   console.log("Hes")
 
@@ -25,42 +26,83 @@ function formatNumber(num: number) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   }
 
-  
-  export default function UserProfileScreen() {
-    const { userId } = useLocalSearchParams();
-    const router = useRouter();
-    const { userID } = useAuth();
-    const { apiCall } = useApi();
-    
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
-  
-    const isCurrentUser = userID == userId;
-    const [isFollowing, setIsFollowing] = useState(false);
-    const [followLoading, setFollowLoading] = useState(false);
-    const [settingsVisible, setSettingsVisible] = useState(false);
-  
-    console.log(isCurrentUser)
 
-    const handleCheckboxToggle = (item: string) => {
-      setCheckedItems(prev => ({
-        ...prev,
-        [item]: !prev[item],
-      }));
-    };
-  
-    // Fetch user data
-    useEffect(() => {
-        // console.log(userId)
-        // console.log(userID)
-      const fetchUserProfile = async () => {
-        try {
-          setIsLoading(true);
-          setError(null);
-          
-          const response = await apiCall(`${API_URL}/users/${userId}`);
+type SmallRecipe = {
+  recipe_id: number;
+  title: string;
+  image_url: string;
+  average_rating: number;
+  prep_time: string;
+  cook_time: string;
+  total_ratings: number;
+};
+
+// Define interfaces for user data
+interface User {
+  user_id: string;
+  username: string;
+  email: string;
+  created_at: string;
+  bio?: string;
+  profilePicture?: any; // need to be handled based on how we store images
+  followers_count: number;
+  following_count: number;
+  likes_count: number;
+  saves_count: number;
+  posts: SmallRecipe[];
+}
+
+const examplePosts: SmallRecipe[] = [
+  {
+    recipe_id: 1,
+    title: "Recipe 1",
+    image_url: "https://via.placeholder.com/150",
+    average_rating: 4.5,
+    prep_time: "10 minutes",
+    cook_time: "20 minutes",
+    total_ratings: 100,
+  },
+];
+
+export default function UserProfileScreen() {
+  const { userId } = useLocalSearchParams();
+  const router = useRouter();
+  const { userID, logout } = useAuth();
+  const { apiCall } = useApi();
+
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [settingsVisible, setSettingsVisible] = useState(false);
+
+  const [groceryList, setGroceryList] = useState<string[]>([]);
+
+  // Determine if this is the current user's profile
+  const isCurrentUser = userID == userId;
+
+  console.log(isCurrentUser);
+
+  const handleCheckboxToggle = (item: string) => {
+    setCheckedItems((prev) => ({
+      ...prev,
+      [item]: !prev[item],
+    }));
+  };
+
+  // Fetch user data
+  useEffect(() => {
+    console.log(userId);
+    console.log(userID);
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await apiCall(`${API_URL}/users/${userId}`);
+
         //   const response = await fetch(`${API_URL}/users/${userID}`);
         // const data = await response.json();
         console.log(response);
@@ -308,14 +350,38 @@ function formatNumber(num: number) {
               style={styles.icon}
             />
           </TouchableOpacity>
+          <View style={styles.recipeSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.recipesRow}>
+                {examplePosts.map((recipe) => (
+                  <View
+                    key={recipe.recipe_id}
+                    style={{ width: 170, height: 170, marginRight: 10 }}
+                  >
+                    <RecipeCard
+                      recipe_id={recipe.recipe_id.toString()}
+                      title={recipe.title}
+                      image={recipe.image_url}
+                      rating={recipe.average_rating}
+                      prepTime={recipe.prep_time}
+                      cookTime={recipe.cook_time}
+                      totalRatings={recipe.total_ratings}
+                      isSmallCard={true}
+                      isActiveCard={true}
+                    />
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+            </View>
         </View>
 
         {/* Grocery List (only show if it's the current user) */}
-        {isCurrentUser && user.grocery_list && user.grocery_list.length > 0 && (
+        {isCurrentUser && (
           <View style={styles.sectionContainer}>
             <TouchableOpacity
               style={styles.sectionTitleContainer}
-              onPress={() => router.push("/grocery-list")}
+              onPress={() => router.push("/(tabs)/profile/grocery-list")}
             >
               <Text style={styles.sectionTitle}>Grocery List</Text>
               <Ionicons
@@ -331,7 +397,7 @@ function formatNumber(num: number) {
               showsVerticalScrollIndicator={true}
               indicatorStyle="black"
             >
-              {user.grocery_list.map((item) => (
+              {groceryList.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.groceryItem}
@@ -377,171 +443,182 @@ function formatNumber(num: number) {
                       )}
 
 
-
                     </ScrollView>
                   </SafeAreaView>
                 );
               }
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: "#F8F5E9",
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    loadingText: {
-      marginTop: 10,
-      fontSize: 16,
-      color: "#555",
-    },
-    errorContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    errorText: {
-      fontSize: 18,
-      color: "#555",
-    },
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      paddingTop: 16,
-      paddingLeft: 16,
-      paddingRight: 16,
-    },
-    backButton: {
-      padding: 8,
-    },
-    username: {
-      fontFamily: "Lora-Bold",
-      fontSize: 24,
-      color: "#D98324",
-    },
-    settingsButton: {
-      paddingRight: 20,
-    },
-    profileInfo: {
-      flexDirection: "row",
-      paddingHorizontal: 15,
-      alignItems: "center",
-    },
-    profilePicture: {
-      width: 113,
-      height: 113,
-      marginRight: 16,
-      borderRadius: 56.5, // Makes it circular
-    },
-    statsContainer: {
-      paddingHorizontal: 30,
-      marginRight: 20,
-      marginTop: 20,
-      paddingRight: 16,
-    },
-    statsRow: {
-      flexDirection: "row",
-      justifyContent: "space-evenly",
-      marginBottom: 20,
-    },
-    stat: {
-      width: "40%",
-      justifyContent: "center",
-      paddingRight: 20,
-      alignItems: "center",
-      borderRadius: 8,
-    },
-    statNumber: {
-      fontSize: 18,
-      fontFamily: "Lora-Bold",
-    },
-    statLabel: {
-      color: "#D98324",
-      fontSize: 16,
-      fontFamily: "Lora-Bold",
-      textAlign: "center",
-    },
-    bioContainer: {
-      borderTopWidth: 1,
-      borderBottomWidth: 1,
-      borderColor: "#D3D3D3",
-      marginHorizontal: 15,
-    },
-    bio: {
-      fontFamily: "Lora-Regular",
-      fontSize: 20,
-      padding: 5,
-      textAlign: "center",
-    },
-    sectionContainer: {
-      marginTop: 20,
-      paddingHorizontal: 15,
-    },
-    sectionTitleContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    sectionTitle: {
-      fontFamily: "Lora-Bold",
-      fontSize: 20,
-      color: "#D98324",
-    },
-    icon: {
-      marginLeft: 8,
-    },
-    groceryListContainer: {
-      marginTop: 10,
-    },
-    groceryItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 8,
-    },
-    checkbox: {
-      width: 20,
-      height: 20,
-      borderWidth: 1,
-      borderColor: "#D3D3D3",
-      borderRadius: 4,
-      marginRight: 10,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    checkboxChecked: {
-      backgroundColor: "#D98324",
-      borderColor: "#D98324",
-    },
-    groceryText: {
-      fontSize: 16,
-      fontFamily: "Lora-Regular",
-    },
-    actionContainer: {
-      padding: 16,
-      alignItems: "center",
-      marginTop: 10,
-    },
-    followButton: {
-      backgroundColor: "#D98324",
-      paddingVertical: 10,
-      paddingHorizontal: 40,
-      borderRadius: 20,
-    },
-    followButtonText: {
-      color: "white",
-      fontFamily: "Lora-Bold",
-      fontSize: 16,
-    },
-    followingButton: {
-      backgroundColor: "#555", // Different color for following state
-    },
-    disabledButton: {
-      opacity: 0.7,
-    },
-          modalOverlay: {
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F5E9",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 18,
+    color: "#555",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
+  },
+  backButton: {
+    padding: 8,
+  },
+  username: {
+    fontFamily: "Lora-Bold",
+    fontSize: 24,
+    color: "#D98324",
+  },
+  settingsButton: {
+    paddingRight: 20,
+  },
+  profileInfo: {
+    flexDirection: "row",
+    paddingHorizontal: 15,
+    alignItems: "center",
+  },
+  profilePicture: {
+    width: 113,
+    height: 113,
+    marginRight: 16,
+    borderRadius: 56.5, // Makes it circular
+  },
+  statsContainer: {
+    paddingHorizontal: 30,
+    marginRight: 20,
+    marginTop: 20,
+    paddingRight: 16,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginBottom: 20,
+  },
+  stat: {
+    width: "40%",
+    justifyContent: "center",
+    paddingRight: 20,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  statNumber: {
+    fontSize: 18,
+    fontFamily: "Lora-Bold",
+  },
+  statLabel: {
+    color: "#D98324",
+    fontSize: 16,
+    fontFamily: "Lora-Bold",
+    textAlign: "center",
+  },
+  bioContainer: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#D3D3D3",
+    marginHorizontal: 15,
+  },
+  bio: {
+    fontFamily: "Lora-Regular",
+    fontSize: 20,
+    padding: 5,
+    textAlign: "center",
+  },
+  sectionContainer: {
+    marginTop: 20,
+    paddingHorizontal: 15,
+  },
+  sectionTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    fontFamily: "Lora-Bold",
+    fontSize: 20,
+    color: "#D98324",
+  },
+  recipeSection: {
+    alignSelf: "stretch",
+    minHeight: 180,
+    marginTop: 10,
+  },
+  recipesRow: {
+    flexDirection: "row",
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  icon: {
+    marginLeft: 8,
+  },
+  groceryListContainer: {
+    marginTop: 10,
+  },
+  groceryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
+    borderRadius: 4,
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#D98324",
+    borderColor: "#D98324",
+  },
+  groceryText: {
+    fontSize: 16,
+    fontFamily: "Lora-Regular",
+  },
+  actionContainer: {
+    padding: 16,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  followButton: {
+    backgroundColor: "#D98324",
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+  },
+  followButtonText: {
+    color: "white",
+    fontFamily: "Lora-Bold",
+    fontSize: 16,
+  },
+  followingButton: {
+    backgroundColor: "#555", // Different color for following state
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
@@ -577,3 +654,5 @@ function formatNumber(num: number) {
     color: "#E53935",
   },
 });
+
+export default styles;

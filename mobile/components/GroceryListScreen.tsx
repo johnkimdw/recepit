@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,14 +10,20 @@ import {
   Share,
   Linking,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+  TouchableOpacity,
+  ActivityIndicator,
+  ImageSourcePropType,
+  Image,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-import GroceryItem from './GroceryItem';
-import SuggestionItem from './SuggestionItem';
+import GroceryItem from "./GroceryItem";
+import GroceryRecipeCard from "./GroceryRecipe";
+import { useApi } from "../hooks/useApi";
+import { API_URL } from "@/config";
 
 // Define types
 interface GroceryItemType {
@@ -27,34 +33,65 @@ interface GroceryItemType {
   checked: boolean;
 }
 
-interface SuggestionItemType {
+// Define IngredientItem
+interface IngredientItem {
   id: string;
   name: string;
 }
 
-// Mock data for ingredient suggestions, fetch from API after backend is made
-const MOCK_INGREDIENT_SUGGESTIONS: SuggestionItemType[] = [
-  { id: '1', name: 'Almond milk' },
-  { id: '2', name: 'Apple cider vinegar' },
-  { id: '3', name: 'Avocado' },
-  { id: '4', name: 'Banana' },
-  { id: '5', name: 'Brown rice' },
-  { id: '6', name: 'Cashew milk' },
-  { id: '7', name: 'Chia seeds' },
-];
+interface Ingredient {
+  name: string;
+  quantity: number;
+}
+
+interface GroceryRecipe {
+  recipe_id: string;
+  title: string;
+  ingredients: Ingredient[];
+  image_url: ImageSourcePropType;
+}
+
+const api_url_recipes = API_URL + "/recipes";
 
 const GroceryListScreen: React.FC = () => {
   // State management
   const [groceryItems, setGroceryItems] = useState<GroceryItemType[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [suggestions, setSuggestions] = useState<SuggestionItemType[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchMode, setIsSearchMode] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<IngredientItem[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const timer = useRef<NodeJS.Timeout | null>(null);
+  const { apiCall } = useApi();
+  // Add state to track expanded recipes
+  const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(
+    new Set()
+  );
+
+  const [currentSearchIngredient, setCurrentSearchIngredient] =
+    useState<IngredientItem | null>(null);
+
+  const [groceryRecipe, setGroceryRecipe] = useState<GroceryRecipe[]>([]);
+  const [isLoadingGroceryRecipe, setIsLoadingGroceryRecipe] =
+    useState<boolean>(false);
+
   const router = useRouter();
+
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const item: IngredientItem = {
+        id: searchQuery,
+        name: searchQuery,
+      };
+      setCurrentSearchIngredient(item);
+    } else {
+      setCurrentSearchIngredient(null);
+    }
+  }, [searchQuery]);
 
   // Load saved grocery list on component mount
   useEffect(() => {
     loadGroceryList();
+    loadGroceryRecipe();
   }, []);
 
   // Save grocery list when it changes
@@ -62,30 +99,62 @@ const GroceryListScreen: React.FC = () => {
     saveGroceryList();
   }, [groceryItems]);
 
-  // Filter suggestions based on search query
+  // Debounced search
   useEffect(() => {
-    if (searchQuery.length > 1) {
-      // In a real app, you'd call an API here
-      const filteredSuggestions = MOCK_INGREDIENT_SUGGESTIONS.filter(
-        item => item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+    if (timer.current) clearTimeout(timer.current);
+
+    if (searchQuery.trim().length === 0) {
+      setSearchResults([]);
+      return;
     }
+
+    timer.current = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 300);
   }, [searchQuery]);
+
+  // Handle search with results
+  const handleSearch = async (query: string) => {
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response = await apiCall(
+        `${api_url_recipes}/search/ingredients?query=${encodeURIComponent(
+          query
+        )}`
+      );
+      const data = await response?.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Error searching recipes:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Toggle search mode
+  const toggleSearchMode = () => {
+    if (isSearchMode) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+    setIsSearchMode(!isSearchMode);
+  };
 
   // Load grocery list from AsyncStorage
   const loadGroceryList = async (): Promise<void> => {
     try {
-      const jsonValue = await AsyncStorage.getItem('@grocery_list');
+      const jsonValue = await AsyncStorage.getItem("@grocery_list");
       if (jsonValue != null) {
         setGroceryItems(JSON.parse(jsonValue));
       }
     } catch (error) {
-      console.error('Error loading grocery list:', error);
+      console.error("Error loading grocery list:", error);
     }
   };
 
@@ -93,200 +162,331 @@ const GroceryListScreen: React.FC = () => {
   const saveGroceryList = async (): Promise<void> => {
     try {
       const jsonValue = JSON.stringify(groceryItems);
-      await AsyncStorage.setItem('@grocery_list', jsonValue);
+      await AsyncStorage.setItem("@grocery_list", jsonValue);
     } catch (error) {
-      console.error('Error saving grocery list:', error);
+      console.error("Error saving grocery list:", error);
+    }
+  };
+
+  const loadGroceryRecipe = async (): Promise<void> => {
+    try {
+      setIsLoadingGroceryRecipe(true);
+      const jsonValue = await AsyncStorage.getItem("@grocery_recipe_ids");
+      if (jsonValue != null) {
+        const groceryRecipeIds = JSON.parse(jsonValue);
+
+        if (groceryRecipeIds && groceryRecipeIds.length > 0) {
+          // Build a URL with the correct FastAPI List[str] format (repeated parameters)
+          const params = new URLSearchParams();
+
+          // Add each recipe ID as a separate parameter with the same name
+          groceryRecipeIds.forEach((recipeId: string) => {
+            params.append("recipe_ids", recipeId);
+          });
+
+          const url = `${api_url_recipes}/?${params.toString()}`;
+
+          const response = await apiCall(url);
+          const data = await response?.json();
+          setGroceryRecipe(data);
+        } else {
+          setGroceryRecipe([]);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading grocery recipe:", error);
+      setGroceryRecipe([]);
+    } finally {
+      setIsLoadingGroceryRecipe(false);
     }
   };
 
   // Add a new item to the grocery list
-  const addItem = (item: { name: string }): void => {
+  const addItem = (item: IngredientItem | null): void => {
+    if (item === null) {
+      return;
+    }
     // Check if item already exists
     const existingItemIndex = groceryItems.findIndex(
-      existing => existing.name.toLowerCase() === item.name.toLowerCase()
+      (existing) => existing.name.toLowerCase() === item.name.toLowerCase()
     );
 
     if (existingItemIndex !== -1) {
       // Update quantity if item exists
       updateItemQuantity(existingItemIndex, 1);
-      setSearchQuery('');
-      setShowSuggestions(false);
+      setSearchQuery("");
+      setIsSearchMode(false);
     } else {
       // Add new item
       const newItem: GroceryItemType = {
-        id: Date.now().toString(),
+        id: item.id || Date.now().toString(),
         name: item.name,
         quantity: 1,
         checked: false,
       };
-      setGroceryItems(prevItems => [...prevItems, newItem]);
-      setSearchQuery('');
-      setShowSuggestions(false);
+      setGroceryItems((prevItems) => [...prevItems, newItem]);
+      setSearchQuery("");
+      setIsSearchMode(false);
     }
   };
 
   // Update item quantity
   const updateItemQuantity = (index: number, change: number): void => {
-    setGroceryItems(prevItems => {
-      return prevItems.map((item, i) => {
-        if (i === index) {
-          const newQuantity = Math.max(0, item.quantity + change);
-          // If quantity becomes 0, remove item in a separate step
-          if (newQuantity === 0) {
-            return null;
+    setGroceryItems((prevItems) => {
+      return prevItems
+        .map((item, i) => {
+          if (i === index) {
+            const newQuantity = Math.max(0, item.quantity + change);
+            // If quantity becomes 0, remove item in a separate step
+            if (newQuantity === 0) {
+              return null;
+            }
+            return { ...item, quantity: newQuantity };
           }
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean) as GroceryItemType[]; // Remove null items (when quantity becomes 0)
-    });
-  };
-
-  // Toggle item checked status
-  const toggleItemChecked = (index: number): void => {
-    setGroceryItems(prevItems => {
-      // Create new array with updated checked status
-      const updatedItems = [...prevItems];
-      updatedItems[index] = {
-        ...updatedItems[index],
-        checked: !updatedItems[index].checked,
-      };
-      
-      // Sort items: unchecked first, checked items at the end
-      return [
-        ...updatedItems.filter(item => !item.checked),
-        ...updatedItems.filter(item => item.checked),
-      ];
+          return item;
+        })
+        .filter(Boolean) as GroceryItemType[]; // Remove null items (when quantity becomes 0)
     });
   };
 
   // Delete an item
   const deleteItem = (index: number): void => {
-    setGroceryItems(prevItems => 
-      prevItems.filter((_, i) => i !== index)
-    );
+    setGroceryItems((prevItems) => prevItems.filter((_, i) => i !== index));
   };
 
   // Export to Notes app
   const exportToNotes = async (): Promise<void> => {
     try {
-      const formattedList = groceryItems
-        .map(item => `☐ ${item.quantity}x ${item.name}`)
-        .join('\n');
-      
+      let formattedList = groceryItems
+        .map((item) => `☐ ${item.quantity}x ${item.name}`)
+        .join("\n");
+
+      for (const recipe of groceryRecipe) {
+        formattedList += `\n${recipe.title}\n`;
+        for (const ingredient of recipe.ingredients) {
+          formattedList += `☐ ${ingredient.quantity.toString().length > 0 ? ingredient.quantity : 1} x ${ingredient.name}\n`;
+        }
+      }
+
       await Share.share({
-        title: 'Grocery List',
+        title: "Grocery List",
         message: formattedList,
       });
     } catch (error) {
-      console.error('Error exporting list:', error);
-      Alert.alert('Export Failed', 'Could not export your grocery list.');
+      console.error("Error exporting list:", error);
+      Alert.alert("Export Failed", "Could not export your grocery list.");
     }
   };
 
   // Checkout to Instacart
   const checkoutToInstacart = (): void => {
     // Add deep linking or URL scheme for Instacart
-    const instacartUrl = 'https://www.instacart.com';
-    Linking.openURL(instacartUrl).catch(err => {
-      Alert.alert('Error', 'Could not open Instacart. Please install the app or visit their website.');
+    const instacartUrl = "https://www.instacart.com";
+    Linking.openURL(instacartUrl).catch((err) => {
+      Alert.alert(
+        "Error",
+        "Could not open Instacart. Please install the app or visit their website."
+      );
     });
   };
 
+  // Toggle recipe expansion
+  const toggleRecipeExpansion = (recipeId: string) => {
+    setExpandedRecipes((prevExpanded) => {
+      const newExpanded = new Set(prevExpanded);
+      if (newExpanded.has(recipeId)) {
+        newExpanded.delete(recipeId);
+      } else {
+        newExpanded.add(recipeId);
+      }
+      return newExpanded;
+    });
+  };
+
+  const toggleRecipeDeletion = async (recipeId: string) => {
+    try {
+      const jsonValue = await AsyncStorage.getItem("@grocery_recipe_ids");
+      if (jsonValue != null) {
+        const groceryRecipeIds = JSON.parse(jsonValue);
+        const updatedGroceryRecipeIds = groceryRecipeIds.filter(
+          (id: string) => id !== recipeId.toString()
+        );
+        await AsyncStorage.setItem(
+          "@grocery_recipe_ids",
+          JSON.stringify(updatedGroceryRecipeIds)
+        );
+      }
+      setGroceryRecipe((prevRecipe) =>
+        prevRecipe.filter((recipe) => recipe.recipe_id !== recipeId)
+      );
+    } catch (error) {
+      console.error("Error deleting recipe:", error);
+    }
+  };
+
   // Render grocery item
-  const renderGroceryItem = ({ item, index }: { item: GroceryItemType; index: number }) => (
+  const renderGroceryItem = ({
+    item,
+    index,
+  }: {
+    item: GroceryItemType;
+    index: number;
+  }) => (
     <GroceryItem
       item={item}
       onUpdateQuantity={(change: number) => updateItemQuantity(index, change)}
-      onToggleChecked={() => toggleItemChecked(index)}
       onDelete={() => deleteItem(index)}
     />
   );
 
-  // Render suggestion item
-  const renderSuggestionItem = ({ item }: { item: SuggestionItemType }) => (
-    <SuggestionItem item={item} onAdd={() => addItem(item)} />
-  );
-
-  // Filter existing grocery items based on search query
-  const filteredGroceryItems = searchQuery
-    ? groceryItems.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : groceryItems;
+  const renderGroceryRecipe = ({
+    item,
+    index,
+  }: {
+    item: GroceryRecipe;
+    index: number;
+  }) => {
+    return (
+      <GroceryRecipeCard
+        item={item}
+        expandedRecipes={expandedRecipes}
+        toggleRecipeExpansion={toggleRecipeExpansion}
+        toggleRecipeDeletion={toggleRecipeDeletion}
+      />
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
-          <Pressable 
-            style={styles.backButton} 
-            onPress={() => router.navigate('/(tabs)/profile')}
-          >
-            <Ionicons name="chevron-back" size={24} color="#000" />
-            <Text style={styles.backText}>Profile</Text>
-          </Pressable>
           <Text style={styles.title}>Grocery List</Text>
         </View>
-        
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+
+        {/* Search Bar - Similar to likes.tsx */}
+        <TouchableOpacity
+          style={styles.searchContainer}
+          onPress={toggleSearchMode}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color="#888"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            onFocus={() => setShowSuggestions(true)}
+            placeholderTextColor="#999"
           />
-          <Pressable style={styles.addButton} onPress={() => {
-            if (searchQuery.trim()) {
-              addItem({ name: searchQuery.trim() });
-            }
-          }}>
-            <Ionicons name="add" size={24} color="#fff" />
-          </Pressable>
-        </View>
-        
-        {/* Suggestions */}
-        {showSuggestions && suggestions.length > 0 && (
-          <View style={styles.suggestionsContainer}>
-            <Text style={styles.sectionTitle}>Suggestions</Text>
-            <FlatList
-              data={suggestions}
-              renderItem={renderSuggestionItem}
-              keyExtractor={item => item.id}
-              style={styles.suggestionsList}
-            />
+        </TouchableOpacity>
+
+        {/* Show either search results or grocery list */}
+        {isSearchMode ? (
+          <View style={styles.searchResultsContainer}>
+            {currentSearchIngredient && (
+              <TouchableOpacity
+                style={styles.searchResultItem}
+                onPress={() => addItem(currentSearchIngredient)}
+              >
+                <View style={styles.searchResultTextContainer}>
+                  <Text style={styles.searchResultTitle}>
+                    {currentSearchIngredient?.name}
+                  </Text>
+                </View>
+                <Ionicons name="add-circle" size={24} color="#D98324" />
+              </TouchableOpacity>
+            )}
+
+            {isSearching ? (
+              <ActivityIndicator
+                size="large"
+                color="#D98324"
+                style={styles.searchingIndicator}
+              />
+            ) : searchResults.length > 0 ? (
+              <FlatList
+                data={searchResults}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.searchResultItem}
+                    onPress={() => addItem(item)}
+                  >
+                    <View style={styles.searchResultTextContainer}>
+                      <Text style={styles.searchResultTitle}>{item.name}</Text>
+                    </View>
+                    <Ionicons name="add-circle" size={24} color="#D98324" />
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item) =>
+                  item.id || `suggestion-${Date.now()}-${Math.random()}`
+                }
+                style={styles.searchResultsList}
+              />
+            ) : searchQuery.trim() !== "" ? (
+              <View style={styles.noResultsContainer}>
+                <Text style={styles.noResultsText}>
+                  No items found. Tap the + button to add "{searchQuery}"
+                </Text>
+                <TouchableOpacity
+                  style={styles.addNewButton}
+                  onPress={() =>
+                    addItem({ id: `new-${Date.now()}`, name: searchQuery })
+                  }
+                >
+                  <Text style={styles.addNewButtonText}>Add Item</Text>
+                  <Ionicons name="add-circle" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          /* Grocery Items List */
+          <View style={styles.groceryListContainer}>
+            {groceryItems.length > 0 ? (
+              <FlatList
+                data={groceryItems}
+                renderItem={renderGroceryItem}
+                keyExtractor={(item) => item.id}
+                style={styles.groceryList}
+              />
+            ) : (
+              <Text style={styles.emptyText}>
+                Your grocery search list is empty. Start by searching for items
+                to add.
+              </Text>
+            )}
+            {isLoadingGroceryRecipe ? (
+              <ActivityIndicator
+                size="large"
+                color="#D98324"
+                style={styles.searchingIndicator}
+              />
+            ) : (
+              <FlatList
+                data={groceryRecipe}
+                renderItem={renderGroceryRecipe}
+                keyExtractor={(item) => item.recipe_id}
+                style={styles.groceryList}
+              />
+            )}
           </View>
         )}
-        
-        {/* Grocery Items List */}
-        <FlatList
-          data={filteredGroceryItems}
-          renderItem={renderGroceryItem}
-          keyExtractor={item => item.id}
-          style={styles.groceryList}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Your grocery list is empty. Start by searching for items to add.
-            </Text>
-          }
-        />
-        
+
         {/* Bottom Buttons */}
         <View style={styles.bottomButtons}>
-          <Pressable 
-            style={[styles.button, styles.exportButton]} 
+          <Pressable
+            style={[styles.button, styles.exportButton]}
             onPress={exportToNotes}
           >
             <Text style={styles.buttonText}>Export</Text>
             <Ionicons name="share-outline" size={20} color="#D98324" />
           </Pressable>
-          
-          <Pressable 
-            style={[styles.button, styles.checkoutButton]} 
+
+          <Pressable
+            style={[styles.button, styles.checkoutButton]}
             onPress={checkoutToInstacart}
           >
             <Text style={styles.checkoutButtonText}>Checkout</Text>
@@ -301,38 +501,40 @@ const GroceryListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f9f5eb',
+    backgroundColor: "#f9f5eb",
   },
   container: {
     flex: 1,
     padding: 16,
+    paddingBottom: Platform.OS === "ios" ? 80 : 60,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   backText: {
     fontSize: 16,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#D98324',
-    marginLeft: 30,
+    fontWeight: "bold",
+    fontFamily: "Lora-Bold",
+    color: "#D98324",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EBEBE4",
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 16,
-    shadowColor: '#000',
+    height: 40,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -343,77 +545,126 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 48,
+    height: 40,
     fontSize: 16,
+    color: "#333",
   },
   addButton: {
-    backgroundColor: '#D98324',
+    backgroundColor: "#D98324",
     borderRadius: 8,
     width: 36,
     height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  suggestionsContainer: {
-    marginBottom: 16,
+  searchResultsContainer: {
+    flex: 1,
+    marginTop: 10,
   },
-  sectionTitle: {
+  searchingIndicator: {
+    marginTop: 30,
+  },
+  searchResultsList: {
+    width: "100%",
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  searchResultTextContainer: {
+    flex: 1,
+  },
+  searchResultTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    color: "#333",
+    fontWeight: "500",
   },
-  suggestionsList: {
-    maxHeight: 150,
+  noResultsContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  addNewButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#D98324",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 10,
+  },
+  addNewButtonText: {
+    color: "#fff",
+    fontWeight: "500",
+    marginRight: 8,
   },
   groceryList: {
     flex: 1,
   },
   emptyText: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#888',
+    textAlign: "center",
+    marginVertical: 40,
+    color: "#888",
   },
   bottomButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 16,
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
   },
   exportButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#D98324',
+    borderColor: "#D98324",
     flex: 1,
     marginRight: 10,
   },
   checkoutButton: {
-    backgroundColor: '#D98324',
+    backgroundColor: "#D98324",
     flex: 1,
     marginLeft: 10,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#D98324',
+    fontWeight: "500",
+    color: "#D98324",
     marginRight: 8,
   },
   checkoutButtonText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#fff',
+    fontWeight: "500",
+    color: "#fff",
     marginRight: 8,
+  },
+  groceryListContainer: {
+    flex: 1,
   },
 });
 

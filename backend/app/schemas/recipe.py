@@ -71,3 +71,12 @@ class RecipeDetail(Recipe):
     is_saved: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class GroceryRecipe(BaseModel):
+    recipe_id: int
+    title: str
+    image_url: Optional[str] = None
+
+    ingredients: List[IngredientInRecipe]
+
+    model_config = ConfigDict(from_attributes=True)
