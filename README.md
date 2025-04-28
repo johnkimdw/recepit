@@ -5,6 +5,7 @@ Recepit is a social recipe app dedicated to revolutionize the way people discove
 With a single tap, users can then add recipe ingredients to a grocery list, which they can then checkout to a delivery service like InstaCart. Users can create shared “cookbooks” with friends of the recipes they want to make, and post their own recipes to become a chefluencer.
 
 # Backend Setup
+**[→ Go to Backend documentation](./backend/README.md)**
 ### Backend Prerequisites
 - Python 3.8+
 - Oracle Database
@@ -54,3 +55,5 @@ With a single tap, users can then add recipe ingredients to a grocery list, whic
    - ReDoc: http://localhost:8000/redoc
 
 # Frontend Setup
+**[→ Go to Frontend documentation](./mobile/README.md)**
+
