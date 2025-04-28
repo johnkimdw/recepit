@@ -10,31 +10,16 @@ interface GroceryItemProps {
     checked: boolean;
   };
   onUpdateQuantity: (change: number) => void;
-  onToggleChecked: () => void;
   onDelete: () => void;
 }
 
 const GroceryItem: React.FC<GroceryItemProps> = ({ 
   item, 
   onUpdateQuantity, 
-  onToggleChecked, 
   onDelete 
 }) => {
   return (
     <View style={[styles.container, item.checked && styles.checkedContainer]}>
-      {/* Checkbox */}
-      <Pressable 
-        style={styles.checkbox} 
-        onPress={onToggleChecked}
-        hitSlop={10}
-      >
-        {item.checked ? (
-          <Ionicons name="checkbox" size={24} color="#D98324" />
-        ) : (
-          <Ionicons name="square-outline" size={24} color="#333" />
-        )}
-      </Pressable>
-      
       {/* Item name */}
       <Text style={[
         styles.itemText, 
@@ -49,7 +34,7 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
           style={styles.quantityButton} 
           onPress={() => onUpdateQuantity(-1)}
         >
-          <Text style={styles.quantityButtonText}>−</Text>
+          <Text style={styles.quantityButtonText}>-</Text>
         </Pressable>
         
         <Text style={styles.quantityText}>{item.quantity}</Text>

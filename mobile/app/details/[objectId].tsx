@@ -17,12 +17,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { API_URL } from "@/config";
 import { useApi } from "@/hooks/useApi";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Ingredient {
   name: string;
   quantity: number;
-  unit: string;
 }
 
 interface Category {
@@ -67,6 +66,7 @@ export default function RecipeDetailScreen() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [isAddedToGrocery, setIsAddedToGrocery] = useState(false);
   const [error, setError] = useState("");
 
   const timer = useRef<NodeJS.Timeout | null>(null);
@@ -91,8 +91,17 @@ export default function RecipeDetailScreen() {
       }
     };
 
+    const checkIfAddedToGrocery = async () => {
+      const jsonValue = await AsyncStorage.getItem("@grocery_recipe_ids");
+      if (jsonValue != null) {
+        const groceryRecipeIds = JSON.parse(jsonValue);
+        setIsAddedToGrocery(groceryRecipeIds.includes(objectId));
+      }
+    };
+
     if (objectId) {
       fetchRecipeDetails();
+      checkIfAddedToGrocery();
     }
   }, [objectId]);
 
@@ -121,6 +130,22 @@ export default function RecipeDetailScreen() {
     }, 1000);
     setIsSaved(!isSaved);
   };
+
+  const toggleAddToGrocery = async () => {
+    const jsonValue = await AsyncStorage.getItem("@grocery_recipe_ids");
+    if (jsonValue != null) {
+      const groceryRecipeIds = JSON.parse(jsonValue);
+      if (groceryRecipeIds.includes(objectId)) {
+        await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify(groceryRecipeIds.filter((id: string) => id !== objectId)));
+      } else {
+        await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify([...groceryRecipeIds, objectId]));
+      }
+    } else {
+      await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify([objectId]));
+    }
+    setIsAddedToGrocery(!isAddedToGrocery);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -145,6 +170,15 @@ export default function RecipeDetailScreen() {
           {/* Recipe Image */}
           <View style={styles.imageContainer}>
             <Image source={recipe.image_url} style={styles.recipeImage} />
+
+            <View style={styles.groceryButtonContainer}>
+              <Ionicons
+                name={isAddedToGrocery ? "cart-sharp" : "cart-outline"}
+                size={18}
+                color="#D98324"
+                onPress={toggleAddToGrocery}
+              />
+            </View>
 
             <View style={styles.saveButtonContainer}>
               <Ionicons
@@ -220,7 +254,7 @@ export default function RecipeDetailScreen() {
             {recipe.ingredients.map((ingredient, index) => (
               <View key={index} style={styles.ingredientItem}>
                 <Text style={styles.ingredientText}>
-                  • {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                  • {ingredient.quantity} {ingredient.name}
                 </Text>
               </View>
             ))}
@@ -305,6 +339,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 8,
     right: 12,
+    backgroundColor: "#E0E0E0",
+    padding: 4,
+    borderRadius: 100,
+  },
+  groceryButtonContainer: {
+    position: "absolute",
+    bottom: 8,
+    right: 50,
     backgroundColor: "#E0E0E0",
     padding: 4,
     borderRadius: 100,

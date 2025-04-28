@@ -16,6 +16,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useApi } from "../../../hooks/useApi";
 import { API_URL } from "@/config";
 import { StatusBar } from "expo-status-bar";
+import RecipeCard from "@/components/RecipeCard";
 
 //   console.log("Hes")
 
@@ -26,6 +27,16 @@ function formatNumber(num: number) {
   }
   return num.toString();
 }
+
+type SmallRecipe = {
+  recipe_id: number;
+  title: string;
+  image_url: string;
+  average_rating: number;
+  prep_time: string;
+  cook_time: string;
+  total_ratings: number;
+};
 
 // Define interfaces for user data
 interface User {
@@ -39,8 +50,20 @@ interface User {
   following_count: number;
   likes_count: number;
   saves_count: number;
-  grocery_list?: string[];
+  posts: SmallRecipe[];
 }
+
+const examplePosts: SmallRecipe[] = [
+  {
+    recipe_id: 1,
+    title: "Recipe 1",
+    image_url: "https://via.placeholder.com/150",
+    average_rating: 4.5,
+    prep_time: "10 minutes",
+    cook_time: "20 minutes",
+    total_ratings: 100,
+  },
+];
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams();
@@ -55,6 +78,8 @@ export default function UserProfileScreen() {
     {}
   );
   const [settingsVisible, setSettingsVisible] = useState(false);
+
+  const [groceryList, setGroceryList] = useState<string[]>([]);
 
   // Determine if this is the current user's profile
   const isCurrentUser = userID == userId;
@@ -271,14 +296,38 @@ export default function UserProfileScreen() {
               style={styles.icon}
             />
           </TouchableOpacity>
+          <View style={styles.recipeSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.recipesRow}>
+                {examplePosts.map((recipe) => (
+                  <View
+                    key={recipe.recipe_id}
+                    style={{ width: 170, height: 170, marginRight: 10 }}
+                  >
+                    <RecipeCard
+                      recipe_id={recipe.recipe_id.toString()}
+                      title={recipe.title}
+                      image={recipe.image_url}
+                      rating={recipe.average_rating}
+                      prepTime={recipe.prep_time}
+                      cookTime={recipe.cook_time}
+                      totalRatings={recipe.total_ratings}
+                      isSmallCard={true}
+                      isActiveCard={true}
+                    />
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+            </View>
         </View>
 
         {/* Grocery List (only show if it's the current user) */}
-        {isCurrentUser && user.grocery_list && user.grocery_list.length > 0 && (
+        {isCurrentUser && (
           <View style={styles.sectionContainer}>
             <TouchableOpacity
               style={styles.sectionTitleContainer}
-              onPress={() => router.push("/grocery-list")}
+              onPress={() => router.push("/(tabs)/profile/grocery-list")}
             >
               <Text style={styles.sectionTitle}>Grocery List</Text>
               <Ionicons
@@ -294,7 +343,7 @@ export default function UserProfileScreen() {
               showsVerticalScrollIndicator={true}
               indicatorStyle="black"
             >
-              {user.grocery_list.map((item) => (
+              {groceryList.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.groceryItem}
@@ -439,6 +488,16 @@ const styles = StyleSheet.create({
     fontFamily: "Lora-Bold",
     fontSize: 20,
     color: "#D98324",
+  },
+  recipeSection: {
+    alignSelf: "stretch",
+    minHeight: 180,
+    marginTop: 10,
+  }, 
+  recipesRow: {
+    flexDirection: "row",
+    paddingHorizontal: 15,
+    marginBottom: 15,
   },
   icon: {
     marginLeft: 8,

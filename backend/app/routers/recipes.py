@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.recipe import Recipe
-from app.schemas.recipe import RecipeBase, RecipeDetail, RecipeInDBBase, SimpleRecipe, RecipeSmallCard
-from app.schemas.ingredient import IngredientInRecipe
+from app.schemas.recipe import RecipeBase, RecipeDetail, RecipeInDBBase, SimpleRecipe, RecipeSmallCard, GroceryRecipe
+from app.schemas.ingredient import IngredientInRecipe, IngredientInDBBase
 from app.schemas.category import CategoryInDBBase
 from app.schemas.review import ReviewInDBBase
 from app.schemas.user import UserInDBBase
@@ -19,9 +19,23 @@ import random
 from typing import List
 from app.core.aws import generate_presigned_url  
 import os 
-from fastapi import File
+from fastapi import File, Query
 
 router = APIRouter()
+
+@router.get("/", response_model=List[GroceryRecipe])
+def get_recipes(recipe_ids: List[str] = Query(None), db: Session = Depends(get_db)):
+    recipes = db.query(Recipe).filter(Recipe.recipe_id.in_(recipe_ids)).all()
+
+    if not recipes:
+        raise HTTPException(status_code=404, detail="Recipes not found")
+    
+    grocery_recipes = []
+    for recipe in recipes:
+        ingredients = [IngredientInRecipe(ingredient_id=i.ingredient.ingredient_id, name=i.ingredient.name, quantity=i.quantity) for i in recipe.ingredients]
+        grocery_recipes.append(GroceryRecipe(recipe_id=recipe.recipe_id, title=recipe.title, image_url=recipe.image_url, ingredients=ingredients))
+
+    return grocery_recipes
 
 @router.post("/")
 def create_recipe(recipe: RecipeBase, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -249,3 +263,26 @@ def unsave_recipe(recipe_id: int, user: User = Depends(get_current_user), db: Se
     db.delete(save)
     db.commit()
     return {"message": "Recipe unsaved"}
+
+@router.get("/search/ingredients", response_model=List[IngredientInDBBase])
+def search_ingredients(query: str, limit: int = 8, db: Session = Depends(get_db)):
+    clean_q = query.strip().lower()
+    if not clean_q:
+        raise HTTPException(400, detail="Query must not be empty")
+    
+
+    results = (
+        db.query(Ingredient)
+        .filter(
+            or_(
+                func.lower(Ingredient.name).like(f"%{clean_q}%"),
+            )
+        )
+        .order_by(Ingredient.name)   # any ordering you like
+        .limit(limit)
+        .all()
+    )
+
+    return results
+    
+    
