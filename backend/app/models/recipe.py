@@ -26,3 +26,6 @@ class Recipe(Base):
     favorites = relationship("Favorite", back_populates="recipe")
     saves = relationship("Save", back_populates="recipe")
     reviews = relationship("Review", back_populates="recipe")
+    dislikes = relationship("Dislike", back_populates="recipe")
+    recommendations = relationship("RecipeRecommendation", back_populates="recipe")
+    seen_by = relationship("SeenRecipe", back_populates="recipe")

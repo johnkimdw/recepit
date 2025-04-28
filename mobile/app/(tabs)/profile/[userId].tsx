@@ -24,60 +24,43 @@ function formatNumber(num: number) {
   if (num >= 1000) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   }
-  return num.toString();
-}
 
-// Define interfaces for user data
-interface User {
-  user_id: string;
-  username: string;
-  email: string;
-  created_at: string;
-  bio?: string;
-  profilePicture?: any; // need to be handled based on how we store images
-  followers_count: number;
-  following_count: number;
-  likes_count: number;
-  saves_count: number;
-  grocery_list?: string[];
-}
+  
+  export default function UserProfileScreen() {
+    const { userId } = useLocalSearchParams();
+    const router = useRouter();
+    const { userID } = useAuth();
+    const { apiCall } = useApi();
+    
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
+  
+    const isCurrentUser = userID == userId;
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+    const [settingsVisible, setSettingsVisible] = useState(false);
+  
+    console.log(isCurrentUser)
 
-export default function UserProfileScreen() {
-  const { userId } = useLocalSearchParams();
-  const router = useRouter();
-  const { userID, logout } = useAuth();
-  const { apiCall } = useApi();
-
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-  const [settingsVisible, setSettingsVisible] = useState(false);
-
-  // Determine if this is the current user's profile
-  const isCurrentUser = userID == userId;
-
-  console.log(isCurrentUser);
-
-  const handleCheckboxToggle = (item: string) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [item]: !prev[item],
-    }));
-  };
-
-  // Fetch user data
-  useEffect(() => {
-    console.log(userId);
-    console.log(userID);
-    const fetchUserProfile = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await apiCall(`${API_URL}/users/${userId}`);
+    const handleCheckboxToggle = (item: string) => {
+      setCheckedItems(prev => ({
+        ...prev,
+        [item]: !prev[item],
+      }));
+    };
+  
+    // Fetch user data
+    useEffect(() => {
+        // console.log(userId)
+        // console.log(userID)
+      const fetchUserProfile = async () => {
+        try {
+          setIsLoading(true);
+          setError(null);
+          
+          const response = await apiCall(`${API_URL}/users/${userId}`);
         //   const response = await fetch(`${API_URL}/users/${userID}`);
         // const data = await response.json();
         console.log(response);
@@ -102,11 +85,65 @@ export default function UserProfileScreen() {
         setIsLoading(false);
       }
     };
-
+      
     if (isLoading && userId) {
       fetchUserProfile();
     }
   }, [userId, apiCall]);
+
+    const handleFollowAction = async () => {
+      if (followLoading) return;
+      
+      try {
+        setFollowLoading(true);
+        const response = await apiCall(
+          `${API_URL}/users/follow/${userId}`,
+          {
+            method: 'POST',
+          }
+        );
+        
+        if (response && response.ok) {
+          // update the UI to show following state
+          setIsFollowing(true);
+          
+          // refresh user data to get updated follower count from backend
+          setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
+        } else {
+          const errorData = await response.json();
+          console.error("Error following user:", errorData);
+        }
+      } catch (error) {
+        console.error("Error in follow action:", error);
+      } finally {
+        setFollowLoading(false);
+      }
+    };
+  
+    if (isLoading) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="dark" />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#D98324" />
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      );
+    }
+  
+    if (error) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="dark" />
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </SafeAreaView>
+      );
+
+    }
+
 
   // Handle back button press
   const handleBack = () => {
@@ -306,186 +343,205 @@ export default function UserProfileScreen() {
                       checkedItems[item] && styles.checkboxChecked,
                     ]}
                   >
-                    {checkedItems[item] && (
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    )}
-                  </View>
-                  <Text style={styles.groceryText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Follow/Unfollow Button (if not current user) */}
-        {!isCurrentUser && (
-          <View style={styles.actionContainer}>
-            <TouchableOpacity
-              style={styles.followButton}
-              onPress={() => console.log("Follow/Unfollow action")}
+                    <View style={[styles.checkbox, checkedItems[item] && styles.checkboxChecked]}>
+                      {checkedItems[item] && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    </View>
+                    <Text style={styles.groceryText}>{item}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+  
+          {/* Follow/Unfollow Button (if not current user) */}
+          {!isCurrentUser && (
+            <View style={styles.actionContainer}>
+              <TouchableOpacity 
+              style={[
+                styles.followButton,
+                isFollowing && styles.followingButton,
+                followLoading && styles.disabledButton
+              ]}
+              onPress={handleFollowAction}
+              disabled={followLoading}
             >
-              <Text style={styles.followButtonText}>Follow</Text>
+              {followLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.followButtonText}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              )}
             </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+                        </View>
+                      )}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F5E9",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#555",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorText: {
-    fontSize: 18,
-    color: "#555",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 16,
-    paddingLeft: 16,
-    paddingRight: 16,
-  },
-  backButton: {
-    padding: 8,
-  },
-  username: {
-    fontFamily: "Lora-Bold",
-    fontSize: 24,
-    color: "#D98324",
-  },
-  settingsButton: {
-    paddingRight: 20,
-  },
-  profileInfo: {
-    flexDirection: "row",
-    paddingHorizontal: 15,
-    alignItems: "center",
-  },
-  profilePicture: {
-    width: 113,
-    height: 113,
-    marginRight: 16,
-    borderRadius: 56.5, // Makes it circular
-  },
-  statsContainer: {
-    paddingHorizontal: 30,
-    marginRight: 20,
-    marginTop: 20,
-    paddingRight: 16,
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginBottom: 20,
-  },
-  stat: {
-    width: "40%",
-    justifyContent: "center",
-    paddingRight: 20,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  statNumber: {
-    fontSize: 18,
-    fontFamily: "Lora-Bold",
-  },
-  statLabel: {
-    color: "#D98324",
-    fontSize: 16,
-    fontFamily: "Lora-Bold",
-    textAlign: "center",
-  },
-  bioContainer: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#D3D3D3",
-    marginHorizontal: 15,
-  },
-  bio: {
-    fontFamily: "Lora-Regular",
-    fontSize: 20,
-    padding: 5,
-    textAlign: "center",
-  },
-  sectionContainer: {
-    marginTop: 20,
-    paddingHorizontal: 15,
-  },
-  sectionTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sectionTitle: {
-    fontFamily: "Lora-Bold",
-    fontSize: 20,
-    color: "#D98324",
-  },
-  icon: {
-    marginLeft: 8,
-  },
-  groceryListContainer: {
-    marginTop: 10,
-  },
-  groceryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: "#D3D3D3",
-    borderRadius: 4,
-    marginRight: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#D98324",
-    borderColor: "#D98324",
-  },
-  groceryText: {
-    fontSize: 16,
-    fontFamily: "Lora-Regular",
-  },
-  actionContainer: {
-    padding: 16,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  followButton: {
-    backgroundColor: "#D98324",
-    paddingVertical: 10,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-  },
-  followButtonText: {
-    color: "white",
-    fontFamily: "Lora-Bold",
-    fontSize: 16,
-  },
-  modalOverlay: {
+
+
+                    </ScrollView>
+                  </SafeAreaView>
+                );
+              }
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#F8F5E9",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loadingText: {
+      marginTop: 10,
+      fontSize: 16,
+      color: "#555",
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    errorText: {
+      fontSize: 18,
+      color: "#555",
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingTop: 16,
+      paddingLeft: 16,
+      paddingRight: 16,
+    },
+    backButton: {
+      padding: 8,
+    },
+    username: {
+      fontFamily: "Lora-Bold",
+      fontSize: 24,
+      color: "#D98324",
+    },
+    settingsButton: {
+      paddingRight: 20,
+    },
+    profileInfo: {
+      flexDirection: "row",
+      paddingHorizontal: 15,
+      alignItems: "center",
+    },
+    profilePicture: {
+      width: 113,
+      height: 113,
+      marginRight: 16,
+      borderRadius: 56.5, // Makes it circular
+    },
+    statsContainer: {
+      paddingHorizontal: 30,
+      marginRight: 20,
+      marginTop: 20,
+      paddingRight: 16,
+    },
+    statsRow: {
+      flexDirection: "row",
+      justifyContent: "space-evenly",
+      marginBottom: 20,
+    },
+    stat: {
+      width: "40%",
+      justifyContent: "center",
+      paddingRight: 20,
+      alignItems: "center",
+      borderRadius: 8,
+    },
+    statNumber: {
+      fontSize: 18,
+      fontFamily: "Lora-Bold",
+    },
+    statLabel: {
+      color: "#D98324",
+      fontSize: 16,
+      fontFamily: "Lora-Bold",
+      textAlign: "center",
+    },
+    bioContainer: {
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: "#D3D3D3",
+      marginHorizontal: 15,
+    },
+    bio: {
+      fontFamily: "Lora-Regular",
+      fontSize: 20,
+      padding: 5,
+      textAlign: "center",
+    },
+    sectionContainer: {
+      marginTop: 20,
+      paddingHorizontal: 15,
+    },
+    sectionTitleContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    sectionTitle: {
+      fontFamily: "Lora-Bold",
+      fontSize: 20,
+      color: "#D98324",
+    },
+    icon: {
+      marginLeft: 8,
+    },
+    groceryListContainer: {
+      marginTop: 10,
+    },
+    groceryItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderWidth: 1,
+      borderColor: "#D3D3D3",
+      borderRadius: 4,
+      marginRight: 10,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    checkboxChecked: {
+      backgroundColor: "#D98324",
+      borderColor: "#D98324",
+    },
+    groceryText: {
+      fontSize: 16,
+      fontFamily: "Lora-Regular",
+    },
+    actionContainer: {
+      padding: 16,
+      alignItems: "center",
+      marginTop: 10,
+    },
+    followButton: {
+      backgroundColor: "#D98324",
+      paddingVertical: 10,
+      paddingHorizontal: 40,
+      borderRadius: 20,
+    },
+    followButtonText: {
+      color: "white",
+      fontFamily: "Lora-Bold",
+      fontSize: 16,
+    },
+    followingButton: {
+      backgroundColor: "#555", // Different color for following state
+    },
+    disabledButton: {
+      opacity: 0.7,
+    },
+          modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
