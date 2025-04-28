@@ -25,7 +25,8 @@ function formatNumber(num: number) {
   if (num >= 1000) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   }
-
+  return num.toString();
+}
 
 type SmallRecipe = {
   recipe_id: number;
@@ -79,6 +80,8 @@ export default function UserProfileScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const [groceryList, setGroceryList] = useState<string[]>([]);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // Determine if this is the current user's profile
   const isCurrentUser = userID == userId;
@@ -127,82 +130,40 @@ export default function UserProfileScreen() {
         setIsLoading(false);
       }
     };
-      
+
     if (isLoading && userId) {
       fetchUserProfile();
     }
   }, [userId, apiCall]);
 
-    const handleFollowAction = async () => {
-      if (followLoading) return;
-      
-      try {
-        setFollowLoading(true);
-        const response = await apiCall(
-          `${API_URL}/users/follow/${userId}`,
-          {
-            method: 'POST',
-          }
-        );
-        
-        if (response && response.ok) {
-          // update the UI to show following state
-          setIsFollowing(true);
-          
-          // refresh user data to get updated follower count from backend
-          setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
-        } else {
-          const errorData = await response.json();
-          console.error("Error following user:", errorData);
-        }
-      } catch (error) {
-        console.error("Error in follow action:", error);
-      } finally {
-        setFollowLoading(false);
-      }
-    };
-  
-    if (isLoading) {
-      return (
-        <SafeAreaView style={styles.container}>
-          <StatusBar style="dark" />
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#D98324" />
-            <Text style={styles.loadingText}>Loading profile...</Text>
-          </View>
-        </SafeAreaView>
-      );
-    }
-  
-    if (error) {
-      return (
-        <SafeAreaView style={styles.container}>
-          <StatusBar style="dark" />
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        </SafeAreaView>
-      );
+  const handleFollowAction = async () => {
+    if (followLoading) return;
 
-    }
-
-
-  // Handle back button press
-  const handleBack = () => {
-    router.back();
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    setSettingsVisible(false);
     try {
-      logout();
-      window.location.href = '/'
+      setFollowLoading(true);
+      const response = await apiCall(`${API_URL}/users/follow/${userId}`, {
+        method: "POST",
+      });
+
+      if (response && response.ok) {
+        // update the UI to show following state
+        setIsFollowing(true);
+
+        // refresh user data to get updated follower count from backend
+        setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
+      } else {
+        const errorData = await response.json();
+        console.error("Error following user:", errorData);
+      }
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Error in follow action:", error);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
+  // These conditional returns should be after all hook declarations
+  // to avoid React hook rules violations
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -225,6 +186,22 @@ export default function UserProfileScreen() {
       </SafeAreaView>
     );
   }
+
+  // Handle back button press
+  const handleBack = () => {
+    router.back();
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setSettingsVisible(false);
+    try {
+      logout();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   if (!user) {
     return (
@@ -373,7 +350,7 @@ export default function UserProfileScreen() {
                 ))}
               </View>
             </ScrollView>
-            </View>
+          </View>
         </View>
 
         {/* Grocery List (only show if it's the current user) */}
@@ -409,24 +386,32 @@ export default function UserProfileScreen() {
                       checkedItems[item] && styles.checkboxChecked,
                     ]}
                   >
-                    <View style={[styles.checkbox, checkedItems[item] && styles.checkboxChecked]}>
-                      {checkedItems[item] && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    <View
+                      style={[
+                        styles.checkbox,
+                        checkedItems[item] && styles.checkboxChecked,
+                      ]}
+                    >
+                      {checkedItems[item] && (
+                        <Ionicons name="checkmark" size={16} color="#fff" />
+                      )}
                     </View>
                     <Text style={styles.groceryText}>{item}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-  
-          {/* Follow/Unfollow Button (if not current user) */}
-          {!isCurrentUser && (
-            <View style={styles.actionContainer}>
-              <TouchableOpacity 
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Follow/Unfollow Button (if not current user) */}
+        {!isCurrentUser && (
+          <View style={styles.actionContainer}>
+            <TouchableOpacity
               style={[
                 styles.followButton,
                 isFollowing && styles.followingButton,
-                followLoading && styles.disabledButton
+                followLoading && styles.disabledButton,
               ]}
               onPress={handleFollowAction}
               disabled={followLoading}
@@ -435,20 +420,16 @@ export default function UserProfileScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text style={styles.followButtonText}>
-                  {isFollowing ? 'Following' : 'Follow'}
+                  {isFollowing ? "Following" : "Follow"}
                 </Text>
               )}
             </TouchableOpacity>
-                        </View>
-                      )}
-
-
-                    </ScrollView>
-                  </SafeAreaView>
-                );
-              }
-
-import { StyleSheet } from 'react-native';
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -654,5 +635,3 @@ const styles = StyleSheet.create({
     color: "#E53935",
   },
 });
-
-export default styles;

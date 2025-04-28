@@ -21,7 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApi } from "@/hooks/useApi";
 import { router } from "expo-router";
 import { Animated } from "react-native";
-import { useAuth } from "@/hooks/useAuth";
+
 type SimpleRecipe = {
   recipe_id: number;
   title: string;
@@ -80,7 +80,7 @@ export default function BrowseScreen() {
   });
   const [isCategoryLoading, setIsCategoryLoading] = useState(true);
 
-  const [username, setUsername] = useState("Guest");
+
   const { userID } = useAuth();
   const { apiCall } = useApi();
 
@@ -137,24 +137,6 @@ export default function BrowseScreen() {
       fetchCategory();
     }
   }, [activeCategory]);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (userID) {
-        try {
-          const response = await apiCall(`${API_URL}/users/${userID}`);
-          const userData = await response.json();
-          if (userData.username) {
-            setUsername(userData.username);
-          }
-        } catch (error) {
-          console.error("Error fetching user info:", error);
-        }
-      }
-    };
-    
-    fetchUserInfo();
-  }, [userID, apiCall]);
 
   // Search functionality
   const handleSearch = async (query: string) => {
@@ -215,6 +197,10 @@ export default function BrowseScreen() {
     }
     setIsSearchMode(!isSearchMode);
   };
+
+  useEffect(() => {
+    console.log("username ", username);
+  }, [username]);
 
   return (
     <SafeAreaView style={styles.container}>

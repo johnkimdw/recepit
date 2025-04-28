@@ -11,13 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { userID } = useAuth();
   const profileHref = userID ? `/profile/${userID}` : "/profile";
   // const href={{ pathname: "/profile/[id]", params: { id: userID }}}
-
 
   return (
     <Tabs
@@ -100,7 +98,7 @@ export default function TabLayout() {
               </View>
             </View>
           ),
-          tabBarLabel: () => null
+          tabBarLabel: () => null,
         }}
       />
       <Tabs.Screen
@@ -144,13 +142,11 @@ export default function TabLayout() {
           // href: "/profile/{{userID}}"
           // href: profileHref
           href: userID
-          ? {
-              pathname: "/profile/[userId]",
-              params: { userId: userID },
-            }
-          : "/profile",
-      
-          // href:"/profile"
+            ? {
+                pathname: "/profile/[userId]",
+                params: { userId: userID },
+              }
+            : undefined, // Use undefined as fallback to prevent navigation when no userID
         }}
       />
       {/* <Tabs.Screen
@@ -174,18 +170,14 @@ export default function TabLayout() {
         }}
       /> */}
       <Tabs.Screen
-        name="grocery-list" 
+        name="grocery-list"
         options={{
           title: "Grocery List",
           href: null,
           headerShown: false,
         }}
       />
-
-
     </Tabs>
-
-    
   );
 }
 
