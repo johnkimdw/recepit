@@ -14,7 +14,7 @@ from app.models.category import Category, recipe_categories
 from app.models.ingredient import RecipeIngredient, Ingredient
 from app.models.review import Review
 from app.models.save import Save
-from sqlalchemy import func, text, or_
+from sqlalchemy import func, text, or_, not_
 import random
 from typing import List
 from app.core.aws import generate_presigned_url  
@@ -176,32 +176,51 @@ def search_recipes(query: str, db: Session = Depends(get_db)):
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
 
-    # Oracle doesn't have ILIKE, so we force both sides to lower-case
-    results = (
-        db.query(Recipe)
-        .filter(
-            or_(
+    # make sure that all the recipes are unique
+    limit = 5
+    seen = set()
+    results = []
+    chance = 5
+    while len(results) < limit and chance > 0:
+        search_results = (
+            db.query(Recipe)
+            .filter(
                 func.lower(Recipe.title).like(f"%{clean_q}%"),
+                not_(Recipe.title.in_(seen))
             )
+            .order_by(Recipe.title)   # any ordering you like
+            .limit(limit - len(results))
+            .all()
         )
-        .order_by(Recipe.title)   # any ordering you like
-        .limit(8)
-        .all()
-    )
 
-    if len(results) < 10:
+        # remove duplicates
+        for r in search_results:
+            if r.title not in seen:
+                seen.add(r.title)
+                results.append(r)
+
+        chance -= 1
+
+
+    chance = 3
+    more_results = []
+    while len(results) < limit * 2 and chance > 0:
         more_results = (
             db.query(Recipe)
             .filter(
-                or_(
-                    func.lower(Recipe.description).like(f"%{clean_q}%"),
-                )
+                func.lower(Recipe.description).like(f"%{clean_q}%"),
+                not_(Recipe.title.in_(seen))
             )
             .order_by(Recipe.title)   # any ordering you like
-            .limit(8 - len(results))
+            .limit(limit * 2 - len(results))
             .all()
         )
-        results.extend(more_results)
+        for r in more_results:
+            if r.title not in seen:
+                seen.add(r.title)
+                results.append(r)   
+
+        chance -= 1
 
     return results
 

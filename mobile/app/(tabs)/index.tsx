@@ -28,7 +28,6 @@ interface Recipe {
   title: string;
   rating: number;
   totalRatings: number;
-  totalTime: string;
   prepTime: string;
   cookTime: string;
   description: string;
@@ -220,7 +219,6 @@ export default function IndexScreen() {
                   title={recipe.title}
                   rating={recipe.rating}
                   totalRatings={recipe.totalRatings}
-                  totalTime={recipe.totalTime}
                   prepTime={recipe.prepTime}
                   cookTime={recipe.cookTime}
                   description={recipe.description}

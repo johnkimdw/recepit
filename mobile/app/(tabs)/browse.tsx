@@ -21,7 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApi } from "@/hooks/useApi";
 import { router } from "expo-router";
 import { Animated } from "react-native";
-
+import { useAuth } from "@/hooks/useAuth";
 type SimpleRecipe = {
   recipe_id: number;
   title: string;
@@ -68,6 +68,8 @@ export default function BrowseScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const searchAnimation = useRef(new Animated.Value(0)).current;
   const timer = useRef<NodeJS.Timeout | null>(null);
+  const { username } = useAuth();
+  const [greeting, setGreeting] = useState("");
 
   const categoryCache = useRef<{ [category: string]: SmallRecipe[] }>({
     Baking: [],
@@ -84,6 +86,17 @@ export default function BrowseScreen() {
 
 
 
+
+  useEffect(() => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) {
+      setGreeting("Good Morning");
+    } else if (currentHour < 20) {
+      setGreeting("Good Afternoon");
+    } else {
+      setGreeting("Good Evening");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchFeaturedRecipe = async () => {
@@ -156,6 +169,7 @@ export default function BrowseScreen() {
         `${api_recipe_url}/search?query=${encodeURIComponent(query)}`
       );
       const data = await response.json();
+      console.log(data);
       setSearchResults(data);
     } catch (error) {
       console.error("Error searching recipes:", error);
@@ -214,7 +228,12 @@ export default function BrowseScreen() {
           {!isSearchMode ? (
             <>
               <View>
-                <Text style={styles.greeting}>{`Good Morning,\n${username}`}</Text>
+
+                <Text style={styles.greeting}>{`${greeting},\n${
+                  (username || "Guest").charAt(0).toUpperCase() +
+                  (username || "Guest").slice(1)
+                }`}</Text>
+
               </View>
               <TouchableOpacity
                 style={styles.searchButton}

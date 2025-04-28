@@ -56,7 +56,7 @@ export default function LikesScreen() {
         console.log("likely the authentication fails");
 
         // redirect to login page
-        router.navigate("/");
+        window.location.href = "/";
       }
     };
     fetchLikedRecipes();
@@ -87,7 +87,7 @@ export default function LikesScreen() {
       console.error("Error searching recipes:", error);
       setSearchResults([]);
       setIsSearching(false);
-      router.navigate("/");
+      window.location.href = "/";
     } finally {
       setIsSearching(false);
     }
