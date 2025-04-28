@@ -5,7 +5,7 @@ from app.models.recipe import Recipe
 from app.schemas.recipe import RecipeBase, RecipeDetail, RecipeInDBBase, SimpleRecipe, RecipeSmallCard, GroceryRecipe
 from app.schemas.ingredient import IngredientInRecipe, IngredientInDBBase
 from app.schemas.category import CategoryInDBBase
-from app.schemas.review import ReviewInDBBase
+from app.schemas.review import ReviewInDBBase, ReviewBase
 from app.schemas.user import UserInDBBase
 from app.core.security import get_current_user 
 from datetime import datetime, timezone
@@ -169,9 +169,13 @@ def get_recipe_details(recipe_id: int, user: User = Depends(get_current_user), d
         average_rating=average_rating,
         reviews_count=review_count,
         favorites_count=favorite_count,
-
         is_saved=False
     )
+
+    # Just add the username to each review after validation
+    for review in recipe_details.reviews:
+        user = db.query(User).filter(User.user_id == review.user_id).first()
+        review.user_name = user.username if user else "Unknown"
 
     for save in user.saves:
         if save.recipe_id == recipe_id:
@@ -264,6 +268,7 @@ def unsave_recipe(recipe_id: int, user: User = Depends(get_current_user), db: Se
     db.commit()
     return {"message": "Recipe unsaved"}
 
+
 @router.get("/search/ingredients", response_model=List[IngredientInDBBase])
 def search_ingredients(query: str, limit: int = 8, db: Session = Depends(get_db)):
     clean_q = query.strip().lower()
@@ -286,3 +291,25 @@ def search_ingredients(query: str, limit: int = 8, db: Session = Depends(get_db)
     return results
     
     
+
+@router.post("/reviews/{recipe_id}", response_model=ReviewInDBBase)
+def create_review(recipe_id: int, review: ReviewBase, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    recipe = db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    new_review = Review(
+        recipe_id=recipe_id,
+        user_id=user.user_id,
+        rating=review.rating,
+        comment=review.comment,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(new_review)
+    db.commit()
+    db.refresh(new_review)
+
+    new_review.user_name = user.username
+
+    return new_review
+

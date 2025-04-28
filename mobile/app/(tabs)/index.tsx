@@ -19,6 +19,8 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { router } from "expo-router";
+import { useRecommendations } from "@/hooks/useRecommendation";
+
 // Define Recipe type
 interface Recipe {
   id: number;
@@ -33,44 +35,55 @@ interface Recipe {
 
 export default function IndexScreen() {
   // Sample recipe data
-  const recipesData: Recipe[] = [
-    {
-      id: 1,
-      image: require("@/assets/images/spicy-tomato.jpg"),
-      title: "Coconut Fish and Tomato Bake",
-      rating: 4,
-      totalRatings: 10184,
-      prepTime: "10 minutes",
-      cookTime: "20 minutes",
-      description:
-        "A coconut-milk dressing infused with garlic, ginger, turmeric and lime coats fish fillets in this sheet-pan dinner. Accompanying the fish are bright bursts of tomatoes which turn jammy",
-    },
-    {
-      id: 2,
-      image: require("@/assets/images/spicy-tomato.jpg"),
-      title: "Spicy Vegetable Curry",
-      rating: 5,
-      totalRatings: 8742,
-      prepTime: "15 minutes",
-      cookTime: "30 minutes",
-      description:
-        "This vibrant vegetable curry brings together a colorful blend of seasonal vegetables in a rich, aromatic sauce that's perfectly balanced with warm spices.",
-    },
-    {
-      id: 3,
-      image: require("@/assets/images/spicy-tomato.jpg"),
-      title: "Classic Beef Stew",
-      rating: 4.5,
-      totalRatings: 6531,
-      prepTime: "20 minutes",
-      cookTime: "1 hour 40 minutes",
-      description:
-        "A hearty beef stew made with tender chunks of beef, carrots, potatoes, and a rich savory broth. Perfect comfort food for chilly evenings.",
-    },
-  ];
+  // const recipesData: Recipe[] = [
+  //   {
+  //     id: 1,
+  //     image: require("@/assets/images/spicy-tomato.jpg"),
+  //     title: "Coconut Fish and Tomato Bake",
+  //     rating: 4,
+  //     totalRatings: 10184,
+  //     totalTime: "30 minutes",
+  //     prepTime: "10 minutes",
+  //     cookTime: "20 minutes",
+  //     description:
+  //       "A coconut-milk dressing infused with garlic, ginger, turmeric and lime coats fish fillets in this sheet-pan dinner. Accompanying the fish are bright bursts of tomatoes which turn jammy",
+  //   },
+  //   {
+  //     id: 2,
+  //     image: require("@/assets/images/spicy-tomato.jpg"),
+  //     title: "Spicy Vegetable Curry",
+  //     rating: 5,
+  //     totalRatings: 8742,
+  //     totalTime: "45 minutes",
+  //     prepTime: "15 minutes",
+  //     cookTime: "30 minutes",
+  //     description:
+  //       "This vibrant vegetable curry brings together a colorful blend of seasonal vegetables in a rich, aromatic sauce that's perfectly balanced with warm spices.",
+  //   },
+  //   {
+  //     id: 3,
+  //     image: require("@/assets/images/spicy-tomato.jpg"),
+  //     title: "Classic Beef Stew",
+  //     rating: 4.5,
+  //     totalRatings: 6531,
+  //     totalTime: "2 hours",
+  //     prepTime: "20 minutes",
+  //     cookTime: "1 hour 40 minutes",
+  //     description:
+  //       "A hearty beef stew made with tender chunks of beef, carrots, potatoes, and a rich savory broth. Perfect comfort food for chilly evenings.",
+  //   },
+  // ];
+
+  const {
+    recipes,
+    loading,
+    error, // NEW: Added error state from hook
+    recordInteraction,
+    refreshRecommendations
+  } = useRecommendations();
 
   // State to track current recipes
-  const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
+  // const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
 
 
   // Animation values for the empty state
@@ -79,6 +92,9 @@ export default function IndexScreen() {
 
   // Update animation values when recipes change
   useEffect(() => {
+
+    console.log(`Number recipes: ${recipes.length}`)
+
     if (recipes.length === 0) {
       // Animate in when no recipes
       emptyStateOpacity.value = withTiming(1, {
@@ -105,24 +121,28 @@ export default function IndexScreen() {
     };
   });
 
-  useEffect(() => {
-    console.log("Platform:", Platform.OS);
-  }, []);
 
-  const handleIgnore = (recipe: Recipe) => {
-    //Alert.alert("Ignored", `${recipe.title} has been ignored`);
-    // Remove the swiped recipe
-    setRecipes((currentRecipes) =>
-      currentRecipes.filter((item) => item.id !== recipe.id)
-    );
+  // const handleIgnore = (recipe: Recipe) => {
+  //   //Alert.alert("Ignored", `${recipe.title} has been ignored`);
+  //   // Remove the swiped recipe
+  //   setRecipes((currentRecipes) =>
+  //     currentRecipes.filter((item) => item.id !== recipe.id)
+  //   );
+  // };
+  const handleIgnore = async (recipe: any) => {
+    await recordInteraction(recipe.recipe_id, "dislike");
   };
 
-  const handleLike = (recipe: Recipe) => {
-    //Alert.alert("Liked", `${recipe.title} has been added to your favorites`);
-    // Remove the swiped recipe
-    setRecipes((currentRecipes) =>
-      currentRecipes.filter((item) => item.id !== recipe.id)
-    );
+  // const handleLike = (recipe: Recipe) => {
+  //   //Alert.alert("Liked", `${recipe.title} has been added to your favorites`);
+  //   // Remove the swiped recipe
+  //   setRecipes((currentRecipes) =>
+  //     currentRecipes.filter((item) => item.id !== recipe.id)
+  //   );
+  // };
+
+  const handleLike = async (recipe: any) => {
+    await recordInteraction(recipe.recipe_id, "like");
   };
 
   return (
@@ -147,11 +167,29 @@ export default function IndexScreen() {
       </View>
 
       <View style={{ height: "70%", width: "90%", marginVertical: 10 }}>
-        {recipes.length > 0 ? (
+        {/* loading  */}
+        {loading && recipes.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading recipes...</Text>
+          </View>
+        ) 
+        /* NEW: Added error state UI */
+        : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={refreshRecommendations}
+            >
+              <Text style={styles.refreshButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) 
+        : recipes.length > 0 ? (
           <View style={styles.cardStack}>
             {recipes.map((recipe, index) => (
               <View
-                key={recipe.id}
+                key={recipe.recipe_id}
                 style={[
                   styles.cardWrapper,
                   {
@@ -160,6 +198,22 @@ export default function IndexScreen() {
                 ]}
               >
                 <RecipeCard
+                  recipe_id={recipe.recipe_id.toString()}
+                  image={recipe.image_url ? { uri: recipe.image_url } : require("@/assets/images/default-recipe.png")}
+                  title={recipe.title}
+                  rating={recipe.average_rating || 0}
+                  totalRatings={recipe.total_ratings || 0}
+                  // totalTime={recipe.prep_time && recipe.cook_time ? 
+                  //   `${parseInt(recipe.prep_time) + parseInt(recipe.cook_time)} minutes` : 
+                  //   "30 minutes"}
+                  prepTime={recipe.prep_time || "15 minutes"}
+                  cookTime={recipe.cook_time || "15 minutes"}
+                  description={recipe.description}
+                  onLike={() => handleLike(recipe)}
+                  onIgnore={() => handleIgnore(recipe)}
+                  isActiveCard={index === 0}
+                />
+                {/* <RecipeCard
                   recipe_id={recipe.id.toString()}
                   image={recipe.image}
                   title={recipe.title}
@@ -171,7 +225,7 @@ export default function IndexScreen() {
                   onLike={() => handleLike(recipe)}
                   onIgnore={() => handleIgnore(recipe)}
                   isActiveCard={index === 0} // Only the top card is interactive
-                />
+                /> */}
               </View>
             ))}
           </View>
@@ -180,7 +234,7 @@ export default function IndexScreen() {
             <Text style={styles.noRecipesText}>No more recipes to show!</Text>
             <TouchableOpacity
               style={styles.refreshButton}
-              onPress={() => setRecipes(recipesData)}
+              onPress={refreshRecommendations}
             >
               <Text style={styles.refreshButtonText}>Refresh</Text>
             </TouchableOpacity>
@@ -258,4 +312,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 18,
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFEEEE",
+    borderRadius: 12,
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#D32F2F",
+    textAlign: "center",
+    marginBottom: 20,
+  }
 });

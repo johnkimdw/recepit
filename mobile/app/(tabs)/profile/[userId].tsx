@@ -25,8 +25,7 @@ function formatNumber(num: number) {
   if (num >= 1000) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   }
-  return num.toString();
-}
+
 
 type SmallRecipe = {
   recipe_id: number;
@@ -103,6 +102,7 @@ export default function UserProfileScreen() {
         setError(null);
 
         const response = await apiCall(`${API_URL}/users/${userId}`);
+
         //   const response = await fetch(`${API_URL}/users/${userID}`);
         // const data = await response.json();
         console.log(response);
@@ -127,11 +127,65 @@ export default function UserProfileScreen() {
         setIsLoading(false);
       }
     };
-
+      
     if (isLoading && userId) {
       fetchUserProfile();
     }
   }, [userId, apiCall]);
+
+    const handleFollowAction = async () => {
+      if (followLoading) return;
+      
+      try {
+        setFollowLoading(true);
+        const response = await apiCall(
+          `${API_URL}/users/follow/${userId}`,
+          {
+            method: 'POST',
+          }
+        );
+        
+        if (response && response.ok) {
+          // update the UI to show following state
+          setIsFollowing(true);
+          
+          // refresh user data to get updated follower count from backend
+          setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
+        } else {
+          const errorData = await response.json();
+          console.error("Error following user:", errorData);
+        }
+      } catch (error) {
+        console.error("Error in follow action:", error);
+      } finally {
+        setFollowLoading(false);
+      }
+    };
+  
+    if (isLoading) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="dark" />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#D98324" />
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      );
+    }
+  
+    if (error) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="dark" />
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </SafeAreaView>
+      );
+
+    }
+
 
   // Handle back button press
   const handleBack = () => {
@@ -355,32 +409,46 @@ export default function UserProfileScreen() {
                       checkedItems[item] && styles.checkboxChecked,
                     ]}
                   >
-                    {checkedItems[item] && (
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    )}
-                  </View>
-                  <Text style={styles.groceryText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Follow/Unfollow Button (if not current user) */}
-        {!isCurrentUser && (
-          <View style={styles.actionContainer}>
-            <TouchableOpacity
-              style={styles.followButton}
-              onPress={() => console.log("Follow/Unfollow action")}
+                    <View style={[styles.checkbox, checkedItems[item] && styles.checkboxChecked]}>
+                      {checkedItems[item] && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    </View>
+                    <Text style={styles.groceryText}>{item}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+  
+          {/* Follow/Unfollow Button (if not current user) */}
+          {!isCurrentUser && (
+            <View style={styles.actionContainer}>
+              <TouchableOpacity 
+              style={[
+                styles.followButton,
+                isFollowing && styles.followingButton,
+                followLoading && styles.disabledButton
+              ]}
+              onPress={handleFollowAction}
+              disabled={followLoading}
             >
-              <Text style={styles.followButtonText}>Follow</Text>
+              {followLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.followButtonText}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              )}
             </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+                        </View>
+                      )}
+
+
+                    </ScrollView>
+                  </SafeAreaView>
+                );
+              }
+
+import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -493,7 +561,7 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     minHeight: 180,
     marginTop: 10,
-  }, 
+  },
   recipesRow: {
     flexDirection: "row",
     paddingHorizontal: 15,
@@ -544,6 +612,12 @@ const styles = StyleSheet.create({
     fontFamily: "Lora-Bold",
     fontSize: 16,
   },
+  followingButton: {
+    backgroundColor: "#555", // Different color for following state
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -580,3 +654,5 @@ const styles = StyleSheet.create({
     color: "#E53935",
   },
 });
+
+export default styles;

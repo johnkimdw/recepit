@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 class ReviewBase(BaseModel):
-    recipe_id: int
+    recipe_id: Optional[int] = None
     rating: float = Field(..., ge=1, le=5)
     comment: Optional[str] = None
 
@@ -17,6 +17,7 @@ class ReviewUpdate(BaseModel):
 class ReviewInDBBase(ReviewBase):
     review_id: int
     user_id: int
+    user_name: Optional[str] = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
