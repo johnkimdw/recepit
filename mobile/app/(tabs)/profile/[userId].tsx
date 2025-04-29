@@ -18,6 +18,7 @@ import { useApi } from "../../../hooks/useApi";
 import { API_URL } from "@/config";
 import { StatusBar } from "expo-status-bar";
 import RecipeCard from "@/components/RecipeCard";
+import * as ImagePicker from "expo-image-picker";
 
 //   console.log("Hes")
 
@@ -46,7 +47,7 @@ interface User {
   email: string;
   created_at: string;
   bio?: string;
-  profilePicture?: any; // need to be handled based on how we store images
+  profile_image?: string;
   followers_count: number;
   following_count: number;
   like_count: number;
@@ -131,6 +132,60 @@ export default function UserProfileScreen() {
       fetchUserProfile();
     }
   }, [userId, isFocused]);
+
+  const handleChangeProfilePicture = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const imageAsset = result.assets[0];
+
+      // Get presigned URL
+      const presignedResponse = await apiCall(`${API_URL}/users/generate-presigned-url-profile`);
+      const { upload_url, image_url } = await presignedResponse.json();
+
+      // Upload to AWS S3
+      const imageUpload = await fetch(upload_url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+        body: await fetch(imageAsset.uri).then(res => res.blob()),
+      });
+
+      if (!imageUpload.ok) {
+        console.error("Failed to upload image to S3");
+        return;
+      }
+
+      // backend update the profile image url
+      const updateProfileImageResponse = await apiCall(`${API_URL}/users/me/profile-image`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ image_url }),
+      });
+
+      if (!updateProfileImageResponse.ok) {
+        console.error("Failed to update profile image URL");
+        return;
+      }
+
+      // update local user state immediately
+      setUser((prev) => prev ? { ...prev, profile_image: image_url } : prev);
+    } catch (error) {
+      console.error("Error changing profile picture:", error);
+    }
+  };
 
   const handleFollowAction = async () => {
     if (followLoading) return;
@@ -262,13 +317,23 @@ export default function UserProfileScreen() {
 
         {/* Profile */}
         <View style={styles.profileInfo}>
-          <Image
-            source={
-              user.profilePicture ||
-              require("@/assets/images/default-profile.jpg")
-            }
-            style={styles.profilePicture}
-          />
+          <View style={styles.profilePictureContainer}>
+            <Image
+              source={
+                user.profile_image
+                  ? { uri: user.profile_image }
+                  : require("@/assets/images/default-profile.jpg")
+              }
+              style={styles.profilePicture}
+            />
+
+            {isCurrentUser && (
+              <TouchableOpacity style={styles.editIcon} onPress={handleChangeProfilePicture}>
+                <Ionicons name="pencil" size={18} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
+
           {isCurrentUser && (
             <View style={styles.statsContainer}>
               {/* followers and likes */}
@@ -335,7 +400,7 @@ export default function UserProfileScreen() {
                 params: { userId: userId },
               })
             }
-            //   onPress={() => router.push(`/users/${userId}/posts`)}
+          //   onPress={() => router.push(`/users/${userId}/posts`)}
           >
             <Text style={styles.sectionTitle}>Posts</Text>
             <Ionicons
@@ -662,5 +727,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  profilePictureContainer: {
+    position: "relative",
+  },
+  editIcon: {
+    position: "absolute",
+    bottom: 4,
+    right: 4,
+    backgroundColor: "#D98324",
+    borderRadius: 14,
+    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
 });
