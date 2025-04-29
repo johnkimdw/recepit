@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 import { useAuth } from "../../../hooks/useAuth";
 import { useApi } from "../../../hooks/useApi";
 import { API_URL } from "@/config";
@@ -60,6 +61,7 @@ export default function UserProfileScreen() {
   const router = useRouter();
   const { userID, logout } = useAuth();
   const { apiCall } = useApi();
+  const isFocused = useIsFocused();
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +91,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     console.log("userId", userId);
     console.log("current user id", userID);
+    console.log("isFocused", isFocused);
     const fetchUserProfile = async () => {
       try {
         setIsLoading(true);
@@ -124,10 +127,10 @@ export default function UserProfileScreen() {
       }
     };
 
-    if (userId) {
+    if (userId && isFocused) {
       fetchUserProfile();
     }
-  }, [userId]);
+  }, [userId, isFocused]);
 
   const handleFollowAction = async () => {
     if (followLoading) return;

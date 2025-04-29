@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days
 
-    OPENAI_API_KEY: str 
     AWS_ACCESS_KEY: Optional[str] = None
     AWS_SECRET_KEY: Optional[str] = None
     AWS_BUCKET_NAME: Optional[str] = None
