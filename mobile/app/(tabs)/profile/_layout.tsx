@@ -38,6 +38,27 @@ export default function ProfileLayout() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="post"
+        options={{
+          animation: "slide_from_right",
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="followed"
+        options={{
+          animation: "slide_from_right",
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="following"
+        options={{
+          animation: "slide_from_right",
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }

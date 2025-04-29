@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 
@@ -26,5 +26,11 @@ class User(UserInDBBase):
 class UserWithFollow(User):
     followers_count: int
     following_count: int
+    save_count: int
+    like_count: int
+    posts: Optional[List["RecipeSmallCard"]] = None
+    is_following: Optional[bool] = None
     
     # model_config = ConfigDict(from_attributes=True)
+
+from app.schemas.recipe import RecipeSmallCard
