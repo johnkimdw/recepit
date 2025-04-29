@@ -20,7 +20,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=func.current_timestamp())
-    
+    profile_image = Column(String(255), nullable=True)
+
     # Relationships
     recipes = relationship("Recipe", back_populates="user")
     favorites = relationship("Favorite", back_populates="user")

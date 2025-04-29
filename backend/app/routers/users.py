@@ -9,6 +9,9 @@ from app.models.recipe import Recipe as RecipeModel
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate, UserWithFollow
 from app.schemas.recipe import Recipe, RecipeSmallCard
 from app.crud.user import get_user, get_users, create_user, update_user, delete_user, follow_user, unfollow_user, get_follow_stats
+from app.core.aws import generate_presigned_url_profile 
+from app.schemas.user import ProfileImageUpdate  
+
 # from app.crud.recipe import get_recipes
 
 router = APIRouter()
@@ -37,6 +40,7 @@ def read_user_me(
         "username": current_user.username,
         "email": current_user.email,
         "created_at": current_user.created_at,
+        "profile_image": current_user.profile_image, 
         "followers_count": stats["followers_count"],
         "following_count": stats["following_count"],
         "save_count": stats["save_count"],
@@ -57,6 +61,23 @@ def helper_get_user_posts(limit: int, db: Session, user_id: int):
     else:
         posts = db.query(RecipeModel).filter(RecipeModel.user_id == user_id).order_by(RecipeModel.created_at.desc()).limit(limit).all()
     return posts
+
+@router.get("/generate-presigned-url-profile")
+def get_presigned_url_profile():
+    return generate_presigned_url_profile()
+
+@router.put("/me/profile-image", response_model=UserSchema)
+def update_profile_image(
+    data: ProfileImageUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update user's profile image URL"""
+    current_user.profile_image = data.image_url
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 @router.get("/posts/{user_id}", response_model=List[RecipeSmallCard])
 def read_user_posts(
@@ -88,6 +109,7 @@ def read_user(user_id: int, db: Session = Depends(get_db), current_user: User = 
         "username": user.username,
         "email": user.email,
         "created_at": user.created_at,
+        "profile_image": user.profile_image,
         "followers_count": stats["followers_count"],
         "following_count": stats["following_count"],
         "save_count": stats["save_count"],

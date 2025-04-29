@@ -27,3 +27,15 @@ def generate_presigned_url():
     )
     return {"upload_url": url, 
             "image_url": f"https://{AWS_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{key}"}
+
+def generate_presigned_url_profile():
+    image_name = secrets.token_hex(16)
+    key = f"profile/{image_name}.jpg"
+    
+    url = s3.generate_presigned_url(
+        "put_object",
+        Params={"Bucket": AWS_BUCKET_NAME, "Key": key, "ContentType": "image/jpeg"},
+        ExpiresIn=300,
+    )
+    return {"upload_url": url, 
+            "image_url": f"https://{AWS_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{key}"}

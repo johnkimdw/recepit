@@ -6,6 +6,9 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
 
+class ProfileImageUpdate(BaseModel):
+    image_url: str
+
 class UserCreate(UserBase):
     password: str
 
@@ -17,7 +20,8 @@ class UserUpdate(BaseModel):
 class UserInDBBase(UserBase):
     user_id: int
     created_at: datetime
-    
+    profile_image: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 class User(UserInDBBase):
