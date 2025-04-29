@@ -48,22 +48,12 @@ interface User {
   profilePicture?: any; // need to be handled based on how we store images
   followers_count: number;
   following_count: number;
-  likes_count: number;
-  saves_count: number;
+  like_count: number;
+  save_count: number;
   posts: SmallRecipe[];
-}
 
-const examplePosts: SmallRecipe[] = [
-  {
-    recipe_id: 1,
-    title: "Recipe 1",
-    image_url: "https://via.placeholder.com/150",
-    average_rating: 4.5,
-    prep_time: "10 minutes",
-    cook_time: "20 minutes",
-    total_ratings: 100,
-  },
-];
+  is_following?: boolean;
+}
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams();
@@ -74,12 +64,12 @@ export default function UserProfileScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  // const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>(
+  //   {}
+  // );
   const [settingsVisible, setSettingsVisible] = useState(false);
 
-  const [groceryList, setGroceryList] = useState<string[]>([]);
+  //const [groceryList, setGroceryList] = useState<string[]>([]);
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -88,17 +78,17 @@ export default function UserProfileScreen() {
 
   console.log(isCurrentUser);
 
-  const handleCheckboxToggle = (item: string) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [item]: !prev[item],
-    }));
-  };
+  // const handleCheckboxToggle = (item: string) => {
+  //   setCheckedItems((prev) => ({
+  //     ...prev,
+  //     [item]: !prev[item],
+  //   }));
+  // };
 
   // Fetch user data
   useEffect(() => {
-    console.log(userId);
-    console.log(userID);
+    console.log("userId", userId);
+    console.log("current user id", userID);
     const fetchUserProfile = async () => {
       try {
         setIsLoading(true);
@@ -106,8 +96,6 @@ export default function UserProfileScreen() {
 
         const response = await apiCall(`${API_URL}/users/${userId}`);
 
-        //   const response = await fetch(`${API_URL}/users/${userID}`);
-        // const data = await response.json();
         console.log(response);
 
         if (!response) {
@@ -122,6 +110,11 @@ export default function UserProfileScreen() {
         }
 
         const data = await response.json();
+
+        if (data?.is_following) {
+          setIsFollowing(true);
+        }
+
         setUser(data);
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -131,26 +124,29 @@ export default function UserProfileScreen() {
       }
     };
 
-    if (isLoading && userId) {
+    if (userId) {
       fetchUserProfile();
     }
-  }, [userId, apiCall]);
+  }, [userId]);
 
   const handleFollowAction = async () => {
     if (followLoading) return;
 
     try {
       setFollowLoading(true);
-      const response = await apiCall(`${API_URL}/users/follow/${userId}`, {
+
+      let action = isFollowing ? "unfollow" : "follow";
+
+      const response = await apiCall(`${API_URL}/users/${action}/${userId}`, {
         method: "POST",
       });
 
       if (response && response.ok) {
         // update the UI to show following state
-        setIsFollowing(true);
+        setIsFollowing((prev) => !prev);
 
         // refresh user data to get updated follower count from backend
-        setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
+        //setIsLoading(true); // This will trigger fetchUserProfile in the useEffect
       } else {
         const errorData = await response.json();
         console.error("Error following user:", errorData);
@@ -270,39 +266,53 @@ export default function UserProfileScreen() {
             }
             style={styles.profilePicture}
           />
-          <View style={styles.statsContainer}>
-            {/* followers and likes */}
-            <View style={styles.statsRow}>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>
-                  {formatNumber(user.followers_count)}
-                </Text>
-                <Text style={styles.statLabel}>followers</Text>
+          {isCurrentUser && (
+            <View style={styles.statsContainer}>
+              {/* followers and likes */}
+              <View style={styles.statsRow}>
+                <TouchableOpacity
+                  style={styles.stat}
+                  onPress={() => router.push(`/(tabs)/profile/followed`)}
+                >
+                  <Text style={styles.statNumber}>
+                    {formatNumber(user.followers_count)}
+                  </Text>
+                  <Text style={styles.statLabel}>followers</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push(`/(tabs)/collections`)}
+                  style={styles.stat}
+                >
+                  <Text style={styles.statNumber}>
+                    {formatNumber(user.like_count || 0)}
+                  </Text>
+                  <Text style={styles.statLabel}>likes</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>
-                  {formatNumber(user.likes_count || 0)}
-                </Text>
-                <Text style={styles.statLabel}>likes</Text>
-              </View>
-            </View>
 
-            {/* following and saves */}
-            <View style={styles.statsRow}>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>
-                  {formatNumber(user.following_count)}
-                </Text>
-                <Text style={styles.statLabel}>following</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>
-                  {formatNumber(user.saves_count || 0)}
-                </Text>
-                <Text style={styles.statLabel}>saves</Text>
+              {/* following and saves */}
+              <View style={styles.statsRow}>
+                <TouchableOpacity
+                  style={styles.stat}
+                  onPress={() => router.push(`/(tabs)/profile/following`)}
+                >
+                  <Text style={styles.statNumber}>
+                    {formatNumber(user.following_count)}
+                  </Text>
+                  <Text style={styles.statLabel}>following</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.stat}
+                  onPress={() => router.push(`/(tabs)/collections`)}
+                >
+                  <Text style={styles.statNumber}>
+                    {formatNumber(user.save_count || 0)}
+                  </Text>
+                  <Text style={styles.statLabel}>saves</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Bio */}
@@ -316,7 +326,12 @@ export default function UserProfileScreen() {
         <View style={styles.sectionContainer}>
           <TouchableOpacity
             style={styles.sectionTitleContainer}
-            onPress={() => router.push(`/`)}
+            onPress={() =>
+              router.push({
+                pathname: `/(tabs)/profile/post`,
+                params: { userId: userId },
+              })
+            }
             //   onPress={() => router.push(`/users/${userId}/posts`)}
           >
             <Text style={styles.sectionTitle}>Posts</Text>
@@ -328,28 +343,34 @@ export default function UserProfileScreen() {
             />
           </TouchableOpacity>
           <View style={styles.recipeSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.recipesRow}>
-                {examplePosts.map((recipe) => (
-                  <View
-                    key={recipe.recipe_id}
-                    style={{ width: 170, height: 170, marginRight: 10 }}
-                  >
-                    <RecipeCard
-                      recipe_id={recipe.recipe_id.toString()}
-                      title={recipe.title}
-                      image={recipe.image_url}
-                      rating={recipe.average_rating}
-                      prepTime={recipe.prep_time}
-                      cookTime={recipe.cook_time}
-                      totalRatings={recipe.total_ratings}
-                      isSmallCard={true}
-                      isActiveCard={true}
-                    />
-                  </View>
-                ))}
+            {user.posts.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.recipesRow}>
+                  {user.posts.map((recipe) => (
+                    <View
+                      key={recipe.recipe_id}
+                      style={{ width: 170, height: 170, marginRight: 10 }}
+                    >
+                      <RecipeCard
+                        recipe_id={recipe.recipe_id.toString()}
+                        title={recipe.title}
+                        image={recipe.image_url}
+                        rating={recipe.average_rating}
+                        prepTime={recipe.prep_time}
+                        cookTime={recipe.cook_time}
+                        totalRatings={recipe.total_ratings}
+                        isSmallCard={true}
+                        isActiveCard={true}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              <View style={styles.noPostsContainer}>
+                <Text>No posts yet, start creating your own recipes!</Text>
               </View>
-            </ScrollView>
+            )}
           </View>
         </View>
 
@@ -368,7 +389,7 @@ export default function UserProfileScreen() {
                 style={styles.icon}
               />
             </TouchableOpacity>
-            <ScrollView
+            {/* <ScrollView
               style={[styles.groceryListContainer, { maxHeight: 5 * 27 }]}
               scrollEnabled={true}
               showsVerticalScrollIndicator={true}
@@ -400,7 +421,7 @@ export default function UserProfileScreen() {
                   </View>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </ScrollView> */}
           </View>
         )}
 
@@ -633,5 +654,10 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: "#E53935",
+  },
+  noPostsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

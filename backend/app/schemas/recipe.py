@@ -6,7 +6,6 @@ from app.schemas.ingredient import RecipeIngredientBase
 from app.schemas.ingredient import IngredientInRecipe
 from app.schemas.category import CategoryInDBBase
 from app.schemas.review import ReviewInDBBase
-from app.schemas.user import UserInDBBase
 
 class RecipeBase(BaseModel):
     title: str
@@ -61,7 +60,7 @@ class Recipe(RecipeInDBBase):
     pass
 
 class RecipeDetail(Recipe):
-    user: UserInDBBase
+    user: "UserInDBBase"
     ingredients: List[IngredientInRecipe]
     categories: List[CategoryInDBBase]
     reviews: List[ReviewInDBBase]
@@ -80,3 +79,5 @@ class GroceryRecipe(BaseModel):
     ingredients: List[IngredientInRecipe]
 
     model_config = ConfigDict(from_attributes=True)
+
+from app.schemas.user import UserInDBBase

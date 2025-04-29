@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.user import User, follows
+from app.models.recipe import Recipe
+from app.models.save import Save
+from app.models.favorite import Favorite
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
@@ -98,18 +101,34 @@ def unfollow_user(db: Session, follower_id: int, following_id: int) -> bool:
     return result.rowcount > 0
 
 def get_follow_stats(db: Session, user_id: int) -> Dict[str, int]:
+    # find the followers counts
     followers_count = db.query(func.count(follows.c.follower_id)).filter(
         follows.c.following_id == user_id
     ).scalar()
     
+    # find the following coutns
     following_count = db.query(func.count(follows.c.following_id)).filter(
         follows.c.follower_id == user_id
+    ).scalar()
+
+    # find the save counts
+    save_count = db.query(func.count(Save.recipe_id)).filter(
+        Save.user_id == user_id
+    ).scalar()
+
+    # find the like counts
+    like_count = db.query(func.count(Favorite.recipe_id)).filter(
+        Favorite.user_id == user_id
     ).scalar()
     
     if not followers_count: followers_count = 0
     if not following_count: following_count = 0
+    if not save_count: save_count = 0
+    if not like_count: like_count = 0
     
     return {
         "followers_count": followers_count,
-        "following_count": following_count
+        "following_count": following_count,
+        "save_count": save_count,
+        "like_count": like_count,
     }

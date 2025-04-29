@@ -148,6 +148,6 @@ def search_recipes(query: str, limit: int = 8, user: User = Depends(get_current_
     if not clean_q:
         raise HTTPException(400, detail="Query must not be empty")
     
-    results = helper_search_liked_recipes(query, limit // 2, user, db)
-    results.extend(helper_search_saved_recipes(query, limit // 2, user, db))
+    results = search_liked_recipes(query, limit // 2, user, db)
+    results.extend(search_saved_recipes(query, limit // 2, user, db))
     return results
