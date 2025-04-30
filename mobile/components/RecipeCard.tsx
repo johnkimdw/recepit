@@ -198,7 +198,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 { height: isSmallCard ? 110 : 200 },
               ]}
             >
-              <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+              <Image
+                source={typeof image === "string" ? { uri: image } : image}
+                style={styles.image}
+                resizeMode="cover"
+                defaultSource={require("../assets/images/logo.png")} // Add a placeholder image
+              />
 
               {/* Like Indicator */}
               <Animated.View
