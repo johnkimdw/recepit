@@ -1,16 +1,38 @@
-import { StyleSheet, View, Text, TextInput, ScrollView, TouchableOpacity, Image } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import Icon from 'react-native-vector-icons/AntDesign';
-import axios from 'axios';
+import { AntDesign } from "@expo/vector-icons";
+import axios from "axios";
 import { useApi } from "@/hooks/useApi";
 const difficultyOptions = ["Easy", "Medium", "Hard"];
-const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Health", "Recipes", "Inspiration", "Budget", "Baking"];
+const categoryOptions = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Dessert",
+  "Snack",
+  "Health",
+  "Recipes",
+  "Inspiration",
+  "Budget",
+  "Baking",
+];
 import { API_URL } from "../../config";
-import * as ImagePicker from 'expo-image-picker';
-import mime from 'mime';
-
-
+import * as ImagePicker from "expo-image-picker";
+import mime from "mime";
+import { router } from "expo-router";
 export default function CreateScreen() {
   const { apiCall } = useApi();
 
@@ -18,7 +40,7 @@ export default function CreateScreen() {
 
   const pickAndUploadImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -27,7 +49,7 @@ export default function CreateScreen() {
     if (!result.canceled) {
       const image = result.assets[0];
       setPickedImageUri(image.uri);
-      console.log("picked image, click upload image to continue")
+      console.log("picked image, click upload image to continue");
     }
   };
 
@@ -35,13 +57,15 @@ export default function CreateScreen() {
   const [description, setDescription] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
+    null
+  );
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState("");
   const [instructions, setInstructions] = useState([""]);
-  const [ingredients, setIngredients] = useState<{ quantity: string; name: string }[]>([
-    { quantity: '', name: '' }
-  ]);
+  const [ingredients, setIngredients] = useState<
+    { quantity: string; name: string }[]
+  >([{ quantity: "", name: "" }]);
 
   const handleDifficultySelect = (level: string) => {
     setSelectedDifficulty(level === selectedDifficulty ? null : level);
@@ -49,7 +73,7 @@ export default function CreateScreen() {
 
   const handleCategorySelect = (category: string) => {
     if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== category));
+      setSelectedCategories(selectedCategories.filter((c) => c !== category));
     } else {
       setSelectedCategories([...selectedCategories, category]);
     }
@@ -61,7 +85,11 @@ export default function CreateScreen() {
     setInstructions(newInstructions);
   };
 
-  const handleIngredientChange = (index: number, field: 'quantity' | 'name', value: string) => {
+  const handleIngredientChange = (
+    index: number,
+    field: "quantity" | "name",
+    value: string
+  ) => {
     const newIngredients = [...ingredients];
     newIngredients[index][field] = value;
     setIngredients(newIngredients);
@@ -77,7 +105,7 @@ export default function CreateScreen() {
     }
   };
   const addIngredient = () => {
-    setIngredients([...ingredients, { quantity: '', name: '' }]);
+    setIngredients([...ingredients, { quantity: "", name: "" }]);
   };
 
   const removeIngredient = (index: number) => {
@@ -127,20 +155,22 @@ export default function CreateScreen() {
       }
 
       // Successfully uploaded image, now set the image URL
+      console.log(`image_url: ${image_url}`);
       setImageUrl(image_url);
-      console.log("image uploaded successfully")
+      console.log("image uploaded successfully");
     } catch (err) {
       console.error("Error uploading image", err);
       alert("An error occurred during the image upload.");
     }
   };
 
-
   const handleSubmit = async () => {
     if (!imageUrl) {
       alert("Please upload an image first.");
       return;
     }
+
+    console.log(`imageUrl: ${imageUrl}`);
 
     try {
       const recipeData = {
@@ -151,13 +181,13 @@ export default function CreateScreen() {
         prep_time: prepTime,
         cook_time: cookTime,
         difficulty: selectedDifficulty,
-        category_ids: selectedCategories.map(c => categoryMapping[c]),
-        image_url: imageUrl, 
+        category_ids: selectedCategories.map((c) => categoryMapping[c]),
+        image_url: imageUrl,
       };
 
       const response = await apiCall(`${API_URL}/recipes/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recipeData),
       });
 
@@ -166,183 +196,212 @@ export default function CreateScreen() {
       }
 
       const result = await response.json();
-      console.log('Recipe created successfully:', result);
+      console.log("Recipe created successfully:", result);
+      router.push(`/details/${result.recipe_id}`);
     } catch (error) {
-      console.error('Error creating recipe:', error.message);
+      console.error(
+        "Error creating recipe:",
+        error instanceof Error ? error.message : String(error)
+      );
     }
   };
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Create a New Recipe</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Text style={styles.title}>Create a New Recipe</Text>
 
-        <Text style={styles.label}>Title</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter recipe title"
-          value={title}
-          onChangeText={setTitle}
-        />
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Enter a short description"
-          multiline
-          value={description}
-          onChangeText={setDescription}
-        />
-
-        {/* Ingredients */}
-        <Text style={styles.label}>Ingredients</Text>
-        {ingredients.map((ingredient, index) => (
-          <View key={index} style={styles.row}>
-            <View style={styles.ingredientInputs}>
-              <TextInput
-                style={[styles.input, styles.quantityInput]}
-                placeholder="Qty"
-                value={ingredient.quantity}
-                onChangeText={(text) => handleIngredientChange(index, 'quantity', text)}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={[styles.input, styles.nameInput]}
-                placeholder="Ingredient"
-                value={ingredient.name}
-                onChangeText={(text) => handleIngredientChange(index, 'name', text)}
-              />
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                onPress={() => removeIngredient(index)}
-              >
-                <Icon name="minuscircleo" size={24} color="#D98324" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={addIngredient}
-              >
-                <Icon name="pluscircleo" size={24} color="#D98324" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-
-        {/* Instructions */}
-        <Text style={styles.label}>Instructions</Text>
-        {instructions.map((instr, index) => (
-          <View key={index} style={styles.row}>
-            <Text style={styles.instructionNumber}>{index + 1}.</Text>
+            <Text style={styles.label}>Title</Text>
             <TextInput
-              style={[styles.input, styles.instructionInput]}
-              placeholder="Instruction step"
-              value={instr}
-              onChangeText={(text) => handleInstructionChange(text, index)}
-              multiline
+              style={styles.input}
+              placeholder="Enter recipe title"
+              value={title}
+              onChangeText={setTitle}
             />
-            <View style={styles.buttonContainer}>
+
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Enter a short description"
+              multiline
+              value={description}
+              onChangeText={setDescription}
+            />
+
+            {/* Ingredients */}
+            <Text style={styles.label}>Ingredients</Text>
+            {ingredients.map((ingredient, index) => (
+              <View key={index} style={styles.row}>
+                <View style={styles.ingredientInputs}>
+                  <TextInput
+                    style={[styles.input, styles.quantityInput]}
+                    placeholder="Qty"
+                    value={ingredient.quantity}
+                    onChangeText={(text) =>
+                      handleIngredientChange(index, "quantity", text)
+                    }
+                    keyboardType="numeric"
+                  />
+                  <TextInput
+                    style={[styles.input, styles.nameInput]}
+                    placeholder="Ingredient"
+                    value={ingredient.name}
+                    onChangeText={(text) =>
+                      handleIngredientChange(index, "name", text)
+                    }
+                  />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={() => removeIngredient(index)}>
+                    <AntDesign name="minuscircleo" size={24} color="#D98324" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={addIngredient}>
+                    <AntDesign name="pluscircleo" size={24} color="#D98324" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            {/* Instructions */}
+            <Text style={styles.label}>Instructions</Text>
+            {instructions.map((instr, index) => (
+              <View key={index} style={styles.row}>
+                <Text style={styles.instructionNumber}>{index + 1}.</Text>
+                <TextInput
+                  style={[styles.input, styles.instructionInput]}
+                  placeholder="Instruction step"
+                  value={instr}
+                  onChangeText={(text) => handleInstructionChange(text, index)}
+                  multiline
+                />
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={() => removeInstruction(index)}>
+                    <AntDesign name="minuscircleo" size={24} color="#D98324" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={addInstruction}>
+                    <AntDesign name="pluscircleo" size={24} color="#D98324" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            {/* Image Upload Buttons */}
+            <View style={styles.imageButtonsContainer}>
               <TouchableOpacity
-                onPress={() => removeInstruction(index)}
+                style={styles.pickImageButton}
+                onPress={pickAndUploadImage}
               >
-                <Icon name="minuscircleo" size={24} color="#D98324" />
+                <Text style={styles.buttonText}>Select Image</Text>
               </TouchableOpacity>
+              <View style={{ width: 10 }} />{" "}
+              {/* Add some space between the buttons */}
               <TouchableOpacity
-                onPress={addInstruction}
+                style={styles.uploadButton}
+                onPress={handleImageUpload}
+                disabled={!pickedImageUri}
               >
-                <Icon name="pluscircleo" size={24} color="#D98324" />
+                <Text style={styles.buttonText}>Upload Image</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        ))}
 
-        {/* Image Upload Buttons */}
-        <View style={styles.imageButtonsContainer}>
-          <TouchableOpacity style={styles.pickImageButton} onPress={pickAndUploadImage}>
-            <Text style={styles.buttonText}>Select Image</Text>
-          </TouchableOpacity>
-          <View style={{ width: 10 }} /> {/* Add some space between the buttons */}
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={handleImageUpload}
-            disabled={!pickedImageUri}
-          >
-            <Text style={styles.buttonText}>Upload Image</Text>
-          </TouchableOpacity>
-        </View>
+            {pickedImageUri ? (
+              <Image
+                source={{ uri: pickedImageUri }}
+                style={styles.recipeImage}
+              />
+            ) : null}
 
-        {pickedImageUri ? (
-          <Image source={{ uri: pickedImageUri }} style={styles.recipeImage} />
-        ) : null}
+            <Text style={styles.label}>Prep Time (minutes)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 15"
+              keyboardType="numeric"
+              value={prepTime}
+              onChangeText={setPrepTime}
+            />
 
-        <Text style={styles.label}>Prep Time (minutes)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 15"
-          keyboardType="numeric"
-          value={prepTime}
-          onChangeText={setPrepTime}
-        />
+            <Text style={styles.label}>Cook Time (minutes)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 30"
+              keyboardType="numeric"
+              value={cookTime}
+              onChangeText={setCookTime}
+            />
 
-        <Text style={styles.label}>Cook Time (minutes)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 30"
-          keyboardType="numeric"
-          value={cookTime}
-          onChangeText={setCookTime}
-        />
+            {/* Difficulty */}
+            <Text style={styles.label}>Difficulty</Text>
+            <View style={styles.chipsContainer}>
+              {difficultyOptions.map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.chip,
+                    selectedDifficulty === level && styles.chipSelected,
+                  ]}
+                  onPress={() => handleDifficultySelect(level)}
+                >
+                  <Text
+                    style={
+                      selectedDifficulty === level
+                        ? styles.chipTextSelected
+                        : styles.chipText
+                    }
+                  >
+                    {level}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-        {/* Difficulty */}
-        <Text style={styles.label}>Difficulty</Text>
-        <View style={styles.chipsContainer}>
-          {difficultyOptions.map((level) => (
+            {/* Category */}
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.chipsContainer}>
+              {categoryOptions.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  style={[
+                    styles.chip,
+                    selectedCategories.includes(category) &&
+                      styles.chipSelected,
+                  ]}
+                  onPress={() => handleCategorySelect(category)}
+                >
+                  <Text
+                    style={
+                      selectedCategories.includes(category)
+                        ? styles.chipTextSelected
+                        : styles.chipText
+                    }
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Submit Recipe Button */}
             <TouchableOpacity
-              key={level}
-              style={[
-                styles.chip,
-                selectedDifficulty === level && styles.chipSelected,
-              ]}
-              onPress={() => handleDifficultySelect(level)}
+              style={styles.submitButton}
+              onPress={handleSubmit}
+              disabled={!imageUrl} // Disable submit button until image is uploaded
             >
-              <Text style={selectedDifficulty === level ? styles.chipTextSelected : styles.chipText}>
-                {level}
-              </Text>
+              <Text style={styles.buttonText}>Submit Recipe</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Category */}
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.chipsContainer}>
-          {categoryOptions.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.chip,
-                selectedCategories.includes(category) && styles.chipSelected,
-              ]}
-              onPress={() => handleCategorySelect(category)}
-            >
-              <Text style={selectedCategories.includes(category) ? styles.chipTextSelected : styles.chipText}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-        </View>
-
-        {/* Submit Recipe Button */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          disabled={!imageUrl} // Disable submit button until image is uploaded
-        >
-          <Text style={styles.buttonText}>Submit Recipe</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView >
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -354,7 +413,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
     flexGrow: 1,
-    paddingBottom: 100
+    paddingBottom: 100,
   },
   title: {
     fontSize: 24,
@@ -447,7 +506,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   ingredientInputs: {
-    flexDirection: 'row',
+    flexDirection: "row",
     flex: 1,
     gap: 8,
   },
@@ -458,28 +517,28 @@ const styles = StyleSheet.create({
     flex: 0.7,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   imageButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
     marginTop: 20,
     marginBottom: 10,
   },
   pickImageButton: {
-    backgroundColor: '#D98324',
+    backgroundColor: "#D98324",
     padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   uploadButton: {
-    backgroundColor: '#D98324',
+    backgroundColor: "#D98324",
     padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

@@ -53,6 +53,7 @@ class RecipeSmallCard(BaseModel):
     prep_time: Optional[str] = None
     cook_time: Optional[str] = None
     total_ratings: Optional[int] = None
+    description: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

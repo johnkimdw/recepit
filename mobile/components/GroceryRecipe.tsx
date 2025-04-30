@@ -13,7 +13,7 @@ interface GroceryRecipe {
   recipe_id: string;
   title: string;
   ingredients: Ingredient[];
-  image_url: ImageSourcePropType;
+  image_url: string;
 }
 
 const GroceryRecipe = ({
@@ -37,7 +37,7 @@ const GroceryRecipe = ({
       >
         <View style={styles.recipeImageContainer}>
           {item.image_url ? (
-            <Image source={item.image_url} style={styles.recipeImage} />
+            <Image source={{ uri: item.image_url }} style={styles.recipeImage} />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="restaurant-outline" size={24} color="#D98324" />

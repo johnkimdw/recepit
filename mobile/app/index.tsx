@@ -144,8 +144,7 @@ export default function WelcomeScreen() {
       <View style={styles.mainContent}>
         <Text style={styles.welcomeText}>
           Welcome To{"\n"}
-          Social{"\n"}
-          Cooking
+          Receipt{"\n"}
         </Text>
 
         <Image
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     position: "relative",
-    paddingTop: 120,
+    paddingTop: 170,
   },
   welcomeText: {
     fontFamily: "Lora-Bold",

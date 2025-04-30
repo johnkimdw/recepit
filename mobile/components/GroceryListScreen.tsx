@@ -48,7 +48,7 @@ interface GroceryRecipe {
   recipe_id: string;
   title: string;
   ingredients: Ingredient[];
-  image_url: ImageSourcePropType;
+  image_url: string;
 }
 
 const api_url_recipes = API_URL + "/recipes";
@@ -264,7 +264,9 @@ const GroceryListScreen: React.FC = () => {
       for (const recipe of groceryRecipe) {
         formattedList += `\n${recipe.title}\n`;
         for (const ingredient of recipe.ingredients) {
-          formattedList += `☐ ${ingredient.quantity.toString().length > 0 ? ingredient.quantity : 1} x ${ingredient.name}\n`;
+          formattedList += `☐ ${
+            ingredient.quantity.toString().length > 0 ? ingredient.quantity : 1
+          } x ${ingredient.name}\n`;
         }
       }
 
@@ -364,10 +366,7 @@ const GroceryListScreen: React.FC = () => {
         </View>
 
         {/* Search Bar - Similar to likes.tsx */}
-        <TouchableOpacity
-          style={styles.searchContainer}
-          onPress={toggleSearchMode}
-        >
+        <View style={styles.searchContainer}>
           <Ionicons
             name="search"
             size={20}
@@ -379,9 +378,10 @@ const GroceryListScreen: React.FC = () => {
             placeholder="Search"
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onFocus={() => toggleSearchMode()}
             placeholderTextColor="#999"
           />
-        </TouchableOpacity>
+        </View>
 
         {/* Show either search results or grocery list */}
         {isSearchMode ? (
@@ -453,11 +453,16 @@ const GroceryListScreen: React.FC = () => {
                 style={styles.groceryList}
               />
             ) : (
-              <Text style={styles.emptyText}>
-                Your grocery search list is empty. Start by searching for items
-                to add.
-              </Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  Your grocery search list is empty. Start by searching for
+                  items to add.
+                </Text>
+              </View>
             )}
+
+            <View style={styles.divider} />
+
             {isLoadingGroceryRecipe ? (
               <ActivityIndicator
                 size="large"
@@ -614,7 +619,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   groceryList: {
+    flex: 2,
+  },
+  emptyContainer: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     textAlign: "center",
@@ -665,6 +675,12 @@ const styles = StyleSheet.create({
   },
   groceryListContainer: {
     flex: 1,
+    minHeight: 100,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 20,
   },
 });
 

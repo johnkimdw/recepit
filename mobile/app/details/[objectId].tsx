@@ -21,7 +21,6 @@ import { useApi } from "@/hooks/useApi";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 interface Ingredient {
   name: string;
   quantity: number;
@@ -62,7 +61,7 @@ interface Recipe {
   prep_time: number;
   cook_time: number;
   difficulty: string;
-  image_url: ImageSourcePropType;
+  image_url: string;
   created_at: string;
   updated_at: string;
   average_rating: number;
@@ -151,21 +150,31 @@ export default function RecipeDetailScreen() {
     setIsSaved(!isSaved);
   };
 
-
   const toggleAddToGrocery = async () => {
     const jsonValue = await AsyncStorage.getItem("@grocery_recipe_ids");
     if (jsonValue != null) {
       const groceryRecipeIds = JSON.parse(jsonValue);
       if (groceryRecipeIds.includes(objectId)) {
-        await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify(groceryRecipeIds.filter((id: string) => id !== objectId)));
+        await AsyncStorage.setItem(
+          "@grocery_recipe_ids",
+          JSON.stringify(
+            groceryRecipeIds.filter((id: string) => id !== objectId)
+          )
+        );
       } else {
-        await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify([...groceryRecipeIds, objectId]));
+        await AsyncStorage.setItem(
+          "@grocery_recipe_ids",
+          JSON.stringify([...groceryRecipeIds, objectId])
+        );
       }
     } else {
-      await AsyncStorage.setItem("@grocery_recipe_ids", JSON.stringify([objectId]));
+      await AsyncStorage.setItem(
+        "@grocery_recipe_ids",
+        JSON.stringify([objectId])
+      );
     }
     setIsAddedToGrocery(!isAddedToGrocery);
-  }
+  };
 
   const toggleExpandReview = (reviewId: number) => {
     setExpandedReviews((prev) =>
@@ -188,7 +197,7 @@ export default function RecipeDetailScreen() {
     }
 
     console.log("Submitting review:", { userRating, userComment });
-    
+
     try {
       setSubmitLoading(true);
       const response = await apiCall(`${api_recipe_url}/reviews/${objectId}`, {
@@ -239,7 +248,10 @@ export default function RecipeDetailScreen() {
         <ScrollView style={styles.scrollContainer}>
           {/* Recipe Image */}
           <View style={styles.imageContainer}>
-            <Image source={recipe.image_url} style={styles.recipeImage} />
+            <Image
+              source={{ uri: recipe.image_url }}
+              style={styles.recipeImage}
+            />
 
             <View style={styles.groceryButtonContainer}>
               <Ionicons

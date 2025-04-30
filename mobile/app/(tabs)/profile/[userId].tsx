@@ -136,7 +136,7 @@ export default function UserProfileScreen() {
   const handleChangeProfilePicture = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ["images"],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -149,7 +149,9 @@ export default function UserProfileScreen() {
       const imageAsset = result.assets[0];
 
       // Get presigned URL
-      const presignedResponse = await apiCall(`${API_URL}/users/generate-presigned-url-profile`);
+      const presignedResponse = await apiCall(
+        `${API_URL}/users/generate-presigned-url-profile`
+      );
       const { upload_url, image_url } = await presignedResponse.json();
 
       // Upload to AWS S3
@@ -158,7 +160,7 @@ export default function UserProfileScreen() {
         headers: {
           "Content-Type": "image/jpeg",
         },
-        body: await fetch(imageAsset.uri).then(res => res.blob()),
+        body: await fetch(imageAsset.uri).then((res) => res.blob()),
       });
 
       if (!imageUpload.ok) {
@@ -167,13 +169,16 @@ export default function UserProfileScreen() {
       }
 
       // backend update the profile image url
-      const updateProfileImageResponse = await apiCall(`${API_URL}/users/me/profile-image`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image_url }),
-      });
+      const updateProfileImageResponse = await apiCall(
+        `${API_URL}/users/me/profile-image`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ image_url }),
+        }
+      );
 
       if (!updateProfileImageResponse.ok) {
         console.error("Failed to update profile image URL");
@@ -181,7 +186,7 @@ export default function UserProfileScreen() {
       }
 
       // update local user state immediately
-      setUser((prev) => prev ? { ...prev, profile_image: image_url } : prev);
+      setUser((prev) => (prev ? { ...prev, profile_image: image_url } : prev));
     } catch (error) {
       console.error("Error changing profile picture:", error);
     }
@@ -328,7 +333,10 @@ export default function UserProfileScreen() {
             />
 
             {isCurrentUser && (
-              <TouchableOpacity style={styles.editIcon} onPress={handleChangeProfilePicture}>
+              <TouchableOpacity
+                style={styles.editIcon}
+                onPress={handleChangeProfilePicture}
+              >
                 <Ionicons name="pencil" size={18} color="#fff" />
               </TouchableOpacity>
             )}
@@ -400,7 +408,7 @@ export default function UserProfileScreen() {
                 params: { userId: userId },
               })
             }
-          //   onPress={() => router.push(`/users/${userId}/posts`)}
+            //   onPress={() => router.push(`/users/${userId}/posts`)}
           >
             <Text style={styles.sectionTitle}>Posts</Text>
             <Ionicons

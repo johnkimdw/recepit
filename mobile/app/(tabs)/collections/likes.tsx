@@ -115,11 +115,8 @@ export default function LikesScreen() {
         <Text style={styles.title}>Likes</Text>
       </View>
 
-      {/* Search Bar */}
-      <TouchableOpacity
-        onPress={toggleSearchMode}
-        style={styles.searchContainer}
-      >
+      {/* Search Bar - Original design but fixed for mobile */}
+      <View style={styles.searchContainer}>
         <Ionicons
           name="search"
           size={18}
@@ -131,9 +128,15 @@ export default function LikesScreen() {
           placeholder="Search"
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onFocus={() => toggleSearchMode()}
           placeholderTextColor="#999"
         />
-      </TouchableOpacity>
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <Ionicons name="close-circle" size={18} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Recipe Grid */}
       {isSearchMode ? (
