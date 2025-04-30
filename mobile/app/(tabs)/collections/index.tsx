@@ -335,13 +335,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8F5E9",
     paddingTop: 16,
+    paddingBottom: 50,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: section_padding_horizontal,
-    paddingTop: 8,
     paddingBottom: 16,
   },
   title: {

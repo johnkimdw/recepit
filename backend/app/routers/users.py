@@ -60,6 +60,12 @@ def helper_get_user_posts(limit: int, db: Session, user_id: int):
         posts = db.query(RecipeModel).filter(RecipeModel.user_id == user_id).order_by(RecipeModel.created_at.desc()).all()
     else:
         posts = db.query(RecipeModel).filter(RecipeModel.user_id == user_id).order_by(RecipeModel.created_at.desc()).limit(limit).all()
+
+    for post in posts:
+        total_ratings = len(post.reviews)
+        average_rating = sum(review.rating for review in post.reviews) / len(post.reviews) if post.reviews else None
+        post.average_rating = average_rating
+        post.total_ratings = total_ratings
     return posts
 
 @router.get("/generate-presigned-url-profile")

@@ -34,46 +34,6 @@ interface Recipe {
 }
 
 export default function IndexScreen() {
-  // Sample recipe data
-  // const recipesData: Recipe[] = [
-  //   {
-  //     id: 1,
-  //     image: require("@/assets/images/spicy-tomato.jpg"),
-  //     title: "Coconut Fish and Tomato Bake",
-  //     rating: 4,
-  //     totalRatings: 10184,
-  //     totalTime: "30 minutes",
-  //     prepTime: "10 minutes",
-  //     cookTime: "20 minutes",
-  //     description:
-  //       "A coconut-milk dressing infused with garlic, ginger, turmeric and lime coats fish fillets in this sheet-pan dinner. Accompanying the fish are bright bursts of tomatoes which turn jammy",
-  //   },
-  //   {
-  //     id: 2,
-  //     image: require("@/assets/images/spicy-tomato.jpg"),
-  //     title: "Spicy Vegetable Curry",
-  //     rating: 5,
-  //     totalRatings: 8742,
-  //     totalTime: "45 minutes",
-  //     prepTime: "15 minutes",
-  //     cookTime: "30 minutes",
-  //     description:
-  //       "This vibrant vegetable curry brings together a colorful blend of seasonal vegetables in a rich, aromatic sauce that's perfectly balanced with warm spices.",
-  //   },
-  //   {
-  //     id: 3,
-  //     image: require("@/assets/images/spicy-tomato.jpg"),
-  //     title: "Classic Beef Stew",
-  //     rating: 4.5,
-  //     totalRatings: 6531,
-  //     totalTime: "2 hours",
-  //     prepTime: "20 minutes",
-  //     cookTime: "1 hour 40 minutes",
-  //     description:
-  //       "A hearty beef stew made with tender chunks of beef, carrots, potatoes, and a rich savory broth. Perfect comfort food for chilly evenings.",
-  //   },
-  // ];
-
   const {
     recipes,
     loading,
@@ -163,7 +123,7 @@ export default function IndexScreen() {
           source={require("@/assets/images/logo.png")}
           style={{ width: 40, height: 40 }}
         />
-        <Text style={styles.title}>Social Cooking</Text>
+        <Text style={styles.title}>Receipt</Text>
       </View>
 
       <View style={{ height: "70%", width: "90%", marginVertical: 10 }}>

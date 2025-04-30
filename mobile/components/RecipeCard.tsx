@@ -74,7 +74,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
   // Create a pan gesture - only enabled for the top card
   const panGesture = Gesture.Pan()
-    .enabled(isActiveCard)
+    .enabled(isActiveCard && !isSmallCard)
     .onStart(() => {
       // Reset scaling for next card
     })
@@ -183,7 +183,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
   // Return the card component
   return (
-    <View style={styles.cardContainer}>
+    <View style={[styles.cardContainer, isSmallCard && styles.shadow]}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <TouchableOpacity
@@ -198,7 +198,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 { height: isSmallCard ? 110 : 200 },
               ]}
             >
-              <Image source={image} style={styles.image} resizeMode="cover" />
+              <Image
+                source={typeof image === "string" ? { uri: image } : image}
+                style={styles.image}
+                resizeMode="cover"
+                defaultSource={require("../assets/images/logo.png")} // Add a placeholder image
+              />
 
               {/* Like Indicator */}
               <Animated.View
@@ -308,6 +313,9 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: "100%",
     height: "100%",
+    marginVertical: 8,
+  },
+  shadow: {
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -319,7 +327,6 @@ const styles = StyleSheet.create({
         elevation: 5,
       },
     }),
-    marginVertical: 8,
   },
   // inside, we set the overflow to "hidden".
   card: {

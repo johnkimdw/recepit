@@ -2,7 +2,9 @@ import boto3
 import os
 import secrets
 from fastapi import HTTPException, FastAPI, UploadFile, File
+from dotenv import load_dotenv
 
+load_dotenv()
 
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
