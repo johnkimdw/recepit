@@ -260,6 +260,7 @@ export default function BrowseScreen() {
                     <Image
                       source={{ uri: recipe.image_url }}
                       style={styles.searchResultImage}
+                      defaultSource={require("@/assets/images/logo.png")}
                     />
                     <View style={styles.searchResultTextContainer}>
                       <Text style={styles.searchResultTitle} numberOfLines={2}>
@@ -290,6 +291,7 @@ export default function BrowseScreen() {
                     <Image
                       source={{ uri: featuredRecipe?.image_url }}
                       style={styles.featuredImage}
+                      defaultSource={require("@/assets/images/logo.png")}
                     />
 
                     {/* Inner shadow using gradient overlays */}
