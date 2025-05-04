@@ -8,12 +8,7 @@ from app.models.favorite import Favorite
 from app.models.review import Review
 
 def init_db():
-    # Import all models so they're registered with Base.metadata
-    # Create all tables
     Base.metadata.create_all(bind=engine)
-    
-    # You could add initial data here if needed
-    # For example, create default categories
     
     print("Database tables created successfully")
 
