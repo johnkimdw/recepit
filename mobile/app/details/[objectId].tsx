@@ -234,9 +234,6 @@ export default function RecipeDetailScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-          <Ionicons name="share-outline" size={24} color="#000" />
-        </TouchableOpacity>
       </View>
 
       {isLoading ? (

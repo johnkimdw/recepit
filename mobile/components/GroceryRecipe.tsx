@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { ImageSourcePropType } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 interface Ingredient {
@@ -37,7 +36,11 @@ const GroceryRecipe = ({
       >
         <View style={styles.recipeImageContainer}>
           {item.image_url ? (
-            <Image source={{ uri: item.image_url }} style={styles.recipeImage} />
+            <Image
+              source={{ uri: item.image_url }}
+              style={styles.recipeImage}
+              defaultSource={require("@/assets/images/logo.png")}
+            />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="restaurant-outline" size={24} color="#D98324" />

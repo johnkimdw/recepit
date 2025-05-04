@@ -104,10 +104,6 @@ const LoginSheet: React.FC<LoginSheetProps> = ({
               <Text style={styles.loginButtonText}>LOGIN</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => console.log("Forgot password")}>
-              <Text style={styles.forgotPassword}>Forgot password?</Text>
-            </TouchableOpacity>
-
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account?</Text>
               <TouchableOpacity onPress={onSignUpPress}>

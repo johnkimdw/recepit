@@ -14,6 +14,8 @@ import { View, Text, StyleSheet, ColorSchemeName } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { Provider } from "react-redux";
+import { store } from "@/store";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -38,9 +40,11 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <InnerApp colorScheme={colorScheme} />
-    </AuthProvider>
+    <Provider store={store}>
+      <AuthProvider>
+        <InnerApp colorScheme={colorScheme} />
+      </AuthProvider>
+    </Provider>
   );
 }
 

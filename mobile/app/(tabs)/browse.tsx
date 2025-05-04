@@ -21,12 +21,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApi } from "@/hooks/useApi";
 import { router } from "expo-router";
 import { Animated } from "react-native";
-
-type SimpleRecipe = {
-  recipe_id: number;
-  title: string;
-  image_url: string;
-};
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  setActiveCategory,
+  fetchCategoryRecipes,
+  fetchFeaturedRecipe,
+} from "@/store/recipeSlice";
 
 type SmallRecipe = {
   recipe_id: number;
@@ -55,11 +55,14 @@ const categories = [
 ];
 
 export default function BrowseScreen() {
-  const [activeCategory, setActiveCategory] = useState("Baking");
-  const [featuredRecipe, setFeaturedRecipe] = useState<SimpleRecipe | null>(
-    null
-  );
-  const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const {
+    activeCategory,
+    categoryCache,
+    featuredRecipe,
+    isFeaturedLoading,
+    isCategoryLoading,
+  } = useAppSelector((state) => state.recipes);
 
   // Search-related state
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -71,21 +74,8 @@ export default function BrowseScreen() {
   const { username } = useAuth();
   const [greeting, setGreeting] = useState("");
 
-  const categoryCache = useRef<{ [category: string]: SmallRecipe[] }>({
-    Baking: [],
-    Budget: [],
-    Health: [],
-    Inspiration: [],
-    Recipes: [],
-  });
-  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
-
-
   const { userID } = useAuth();
   const { apiCall } = useApi();
-
-
-
 
   useEffect(() => {
     const currentHour = new Date().getHours();
@@ -99,44 +89,16 @@ export default function BrowseScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchFeaturedRecipe = async () => {
-      try {
-        setIsFeaturedLoading(true);
-        const response = await fetch(`${api_recipe_url}/featured`);
-        const data = await response.json();
-        setFeaturedRecipe(data);
-      } catch (error) {
-        console.error("Error fetching featured recipe:", error);
-      } finally {
-        setIsFeaturedLoading(false);
-      }
-    };
-
     if (!featuredRecipe) {
-      fetchFeaturedRecipe();
+      dispatch(fetchFeaturedRecipe());
     }
-  }, []);
+  }, [dispatch, featuredRecipe]);
 
   useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        setIsCategoryLoading(true);
-        const response = await fetch(
-          `${api_recipe_url}/category/${activeCategory}`
-        );
-        const data = await response.json();
-        categoryCache.current[activeCategory] = data;
-      } catch (error) {
-        console.error("Error fetching category:", error);
-      } finally {
-        setIsCategoryLoading(false);
-      }
-    };
-
-    if (categoryCache.current[activeCategory].length === 0) {
-      fetchCategory();
+    if (categoryCache[activeCategory].length === 0) {
+      dispatch(fetchCategoryRecipes(activeCategory));
     }
-  }, [activeCategory]);
+  }, [dispatch, activeCategory, categoryCache]);
 
   // Search functionality
   const handleSearch = async (query: string) => {
@@ -202,6 +164,11 @@ export default function BrowseScreen() {
     console.log("username ", username);
   }, [username]);
 
+  // Update category selection handler
+  const handleCategoryPress = (category: string) => {
+    dispatch(setActiveCategory(category));
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -214,12 +181,10 @@ export default function BrowseScreen() {
           {!isSearchMode ? (
             <>
               <View>
-
                 <Text style={styles.greeting}>{`${greeting},\n${
                   (username || "Guest").charAt(0).toUpperCase() +
                   (username || "Guest").slice(1)
                 }`}</Text>
-
               </View>
               <TouchableOpacity
                 style={styles.searchButton}
@@ -295,6 +260,7 @@ export default function BrowseScreen() {
                     <Image
                       source={{ uri: recipe.image_url }}
                       style={styles.searchResultImage}
+                      defaultSource={require("@/assets/images/logo.png")}
                     />
                     <View style={styles.searchResultTextContainer}>
                       <Text style={styles.searchResultTitle} numberOfLines={2}>
@@ -325,6 +291,7 @@ export default function BrowseScreen() {
                     <Image
                       source={{ uri: featuredRecipe?.image_url }}
                       style={styles.featuredImage}
+                      defaultSource={require("@/assets/images/logo.png")}
                     />
 
                     {/* Inner shadow using gradient overlays */}
@@ -374,7 +341,7 @@ export default function BrowseScreen() {
                       activeCategory === category &&
                         styles.activeCategoryButton,
                     ]}
-                    onPress={() => setActiveCategory(category)}
+                    onPress={() => handleCategoryPress(category)}
                   >
                     <Text
                       style={[
@@ -399,7 +366,7 @@ export default function BrowseScreen() {
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.recipesRow}>
-                    {categoryCache.current[activeCategory].map((recipe) => (
+                    {categoryCache[activeCategory].map((recipe) => (
                       <View
                         key={recipe.recipe_id}
                         style={{ width: 170, height: 170, marginRight: 10 }}
