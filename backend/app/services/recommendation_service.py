@@ -1,4 +1,3 @@
-# app/services/recommendation_service.py
 from sqlalchemy.orm import Session
 from sqlalchemy import text, bindparam
 import cx_Oracle
@@ -13,31 +12,30 @@ from app.models.dislike import Dislike
 def calculate_user_similarity(db: Session, user_id: int, top_n: int = 10):
     """Call the database procedure to calculate user similarity."""
     try:
-        # Execute the stored procedure, catching and handling any errors
         db.execute(
             text("BEGIN find_similar_users(:user_id, :top_n); END;"),
             {"user_id": user_id, "top_n": top_n}
         )
         db.commit()
         return True
-    # handle:
+    # need to handle:
         # ORA-00001: unique constraint (TEST_USER1.USER_SIM_UNIQUE) violated
         # ORA-06512: at "TEST_USER1.FIND_SIMILAR_USERS", line 37
     except Exception as e:
         db.rollback()
         print(f"Error calculating user similarity: {e}")
         
-        # If it's a unique constraint violation, try again with a manual delete
+        # try again with a manual delete
         if "ORA-00001" in str(e) and "USER_SIM_UNIQUE" in str(e):
             try:
-                # Try with both user_id_1 and user_id_2
+                # try with both user_id_1 and user_id_2
                 db.execute(
                     text("DELETE FROM user_similarity WHERE user_id_1 = :user_id OR user_id_2 = :user_id"),
                     {"user_id": user_id}
                 )
                 db.commit()
                 
-                # Try the stored procedure again
+                # try the stored procedure again
                 db.execute(
                     text("BEGIN find_similar_users(:user_id, :top_n); END;"),
                     {"user_id": user_id, "top_n": 10}
@@ -77,15 +75,13 @@ def generate_simple_recommendations(db, user_id, limit=10):
         ORDER BY DBMS_RANDOM.VALUE
         FETCH FIRST :limit ROWS ONLY
     """).bindparams(bindparam('exclude_ids', expanding=True))
-
-        # Execute with parameters
  
         
         exclude_empty = 1 if not exclude_ids else 0
         result = db.execute(
             query, 
             {
-                "exclude_ids": tuple(exclude_ids) if exclude_ids else (-1,),  # Dummy value if empty
+                "exclude_ids": tuple(exclude_ids) if exclude_ids else (-1,), 
                 "exclude_empty": exclude_empty,
                 "limit": limit
             }
@@ -105,10 +101,10 @@ def generate_simple_recommendations(db, user_id, limit=10):
         
         db.commit()
         
-        # Get the actual recipes
+        # get the actual recipes
         recipes = db.query(Recipe).filter(Recipe.recipe_id.in_(recipe_ids)).all()
         
-        # Update recommendations to 'shown'
+        # update recommendations to 'shown'
         db.query(RecipeRecommendation).filter(
             RecipeRecommendation.user_id == user_id,
             RecipeRecommendation.recipe_id.in_(recipe_ids),
@@ -160,7 +156,7 @@ def generate_recommendations(db: Session, user_id: int, count: int = 20):
 #     except Exception as e:
 #         db.rollback()
 #         print(f"Error in get_next_recommendations: {e}")
-#         # Final fallback - get random recipes without any filtering
+#         # 
 #         try:
 #             from sqlalchemy.sql import text
 #             result = db.execute(
