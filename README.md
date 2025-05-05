@@ -33,10 +33,18 @@ With a single tap, users can then add recipe ingredients to a grocery list, whic
 
 2. Create a `.env` file in the root directory to store environment variables:
    ```
-   DATABASE_URL=oracle+cx_oracle://username:password@host:port/service_name
-   SECRET_KEY=your_secret_key
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
+      AWS_ACCESS_KEY = xxx
+      AWS_SECRET_KEY = xxx
+      AWS_BUCKET_NAME = xxx
+      AWS_REGION = xxx
+
+      JWT_SECRET_KEY = your-secret-key-for-jwt
+
+      DB_USER = test_user1
+      DB_PASSWORD = xxx
+      DB_HOST = xxx
+      DB_PORT = xxx
+      DB_SERVICE = XE
    ```
 
 ### Running the Backend
@@ -49,6 +57,11 @@ With a single tap, users can then add recipe ingredients to a grocery list, whic
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
+
+3. You can also cd to the backend folder and do this to run the backend
+```bash
+   python3 -m app.run
+```
 
 3. Access the API documentation:
    - Swagger UI: http://localhost:8000/docs
