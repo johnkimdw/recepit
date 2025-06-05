@@ -1,6 +1,5 @@
 
-# Recept!
-## [Won $1050 1st Place Prize for Advanced Databases Projects Competition]
+# Recepit!
 
 
 Recepit is a social recipe app dedicated to revolutionize the way people discover, make, and share recipes. While there are many recipes on apps such as TikTok, YouTube, and Instagram, the process of watching the video, getting the recipe, and checking out remains fragmented. Some influencers have their recipe in the description, some have their own dedicated website, and others make you comment to receive the recipe. We address these challenges by unifying all these recipes into an app where users are shown recipes in a TikTok (infinite scroll) fashion with likes and comments. 
